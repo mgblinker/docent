@@ -4,7 +4,7 @@ services:
     build:
       context: ../../
       dockerfile: .docker/Dockerfile
-    image: processity-documentation:latest-uat
+    image: 192.168.178.40:10006/processity/processity-docs:latest-uat
     container_name: processity-documentation-uat
     ports:
       - "5070:3100"

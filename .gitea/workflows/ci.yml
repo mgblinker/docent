@@ -1,0 +1,91 @@
+name: CI - UAT
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+      - ".gitea/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: 192.168.178.40:10006
+  IMAGE_PREFIX: processity/processity-docs
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=processity-docs
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/node_modules/**,viewer/node_modules/**,.docker/**,.gitea/**
+            -Dsonar.qualitygate.wait=true
+
+  build:
+    needs: sonarqube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to registry
+        run: printf '%s' "${{ secrets.CANDIDATE_TAG_PUSH_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ secrets.CANDIDATE_TAG_PUSH_USER }}" --password-stdin
+
+      - name: Build image
+        run: docker compose -f .docker/uat/docker-compose.yml build
+
+      - name: Push image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker compose -f .docker/uat/docker-compose.yml push
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-docs-uat
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.UAT_REMOTE_SSH_PRIVATE_KEY }}
+
+      - name: Configure SSH known_hosts
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Login to registry
+        run: printf '%s' "${{ secrets.CANDIDATE_TAG_PUSH_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ secrets.CANDIDATE_TAG_PUSH_USER }}" --password-stdin
+
+      - name: Create remote Docker context
+        run: |
+          docker context create deploy-remote --docker "host=ssh://${{ vars.UAT_REMOTE_HOST }}"
+          docker context use deploy-remote
+
+      - name: Deploy
+        run: |
+          docker compose -f .docker/uat/docker-compose.yml pull
+          docker compose -f .docker/uat/docker-compose.yml up -d --force-recreate
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker context use default
+          docker logout ${{ env.REGISTRY }} >/dev/null 2>&1 || true
