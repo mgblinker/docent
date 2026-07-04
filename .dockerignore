@@ -1,0 +1,7 @@
+viewer/node_modules
+viewer/dist
+viewer/dist-server
+.docker
+.git
+*.log
+*.sh

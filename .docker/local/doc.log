@@ -1,0 +1,6 @@
+Building navigation tree...
+Building search index...
+Indexed 155 documents.
+Serving static files from: /app/dist
+Docs server running at http://localhost:3100
+Serving docs from: /app/docs

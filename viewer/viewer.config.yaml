@@ -1,0 +1,59 @@
+docsDir: ../docs
+siteTitle: Processity Docs
+exclude:
+  - "javascripts/**"
+  - "Users/**"
+  - "**/node_modules/**"
+
+navExcludeFiles:
+  - index.md
+  - scope.md
+  - backlog.md
+
+transparentFolders:
+  - .claude
+  - docs
+  - src
+  - test
+  - Documentation
+
+# Document types for tab navigation
+# Each doc gets a type via frontmatter `type:` or auto-inference
+docTypes:
+  - id: architecture
+    label: Architecture
+    patterns:
+      - "**/architecture.md"
+      - "**/architecture/**"
+      - "**/*architecture*.md"
+      - "**/*migration*.md"
+      - "**/*data-model*.md"
+  - id: feature
+    label: Features
+    patterns:
+      - "**/*feature*.md"
+      - "**/*implementation*.md"
+      - "**/*summary*.md"
+      - "**/*integration*.md"
+      - "**/*refactor*.md"
+      - "**/README.md"
+      - "**/IMPROVEMENTS.md"
+  - id: howto
+    label: How-tos
+    patterns:
+      - "**/*guide*.md"
+      - "**/*debugging*.md"
+      - "**/*diagnostic*.md"
+      - "**/*conventions*.md"
+      - "**/*quick-reference*.md"
+      - "**/*getting-started*.md"
+      - "**/*test-flow*.md"
+  - id: manual
+    label: User Manuals
+    patterns:
+      - "**/*manual*.md"
+      - "**/*user*.md"
+      - "**/*booking*.md"
+      - "**/*usage*.md"
+      - "**/*quick-start*.md"
+      - "**/*tooltip*.md"

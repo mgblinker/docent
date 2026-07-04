@@ -1,0 +1,17 @@
+name: 'processity-documentation-local'
+services:
+  processity-documentation:
+    build:
+      context: ../../
+      dockerfile: .docker/Dockerfile
+    image: processity-documentation:latest-local
+    container_name: processity-documentation-local
+    ports:
+      - "5070:3100"
+    networks:
+      - processity-network
+
+networks:
+  processity-network:
+    driver: bridge
+    external: true

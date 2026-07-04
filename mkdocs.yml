@@ -1,0 +1,28 @@
+site_name: Processity Docs
+docs_dir: docs
+theme:
+  name: material
+  features:
+    - content.code.annotate
+    - navigation.sections
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
+    - navigation.path
+    - search.highlight
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: true
+plugins:
+  - search
+  - awesome-pages:
+      strict: false
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+  - javascripts/mermaid-init.js
+  - javascripts/mermaid-zoom.js
