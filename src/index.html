@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processity Docs</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <button class="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
+      <a href="#/" class="site-title">Processity Docs</a>
+    </div>
+    <div class="header-right">
+      <div class="search-container" id="search-container"></div>
+    </div>
+  </header>
+  <nav class="tab-bar" id="tab-bar" aria-label="Document categories"></nav>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Documentation navigation">
+      <div class="sidebar-content" id="sidebar-content"></div>
+    </nav>
+    <main class="content" id="content">
+      <div class="content-inner" id="content-inner">
+        <p class="loading">Loading...</p>
+      </div>
+    </main>
+    <aside class="toc" id="toc"></aside>
+  </div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>
