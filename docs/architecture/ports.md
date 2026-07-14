@@ -77,9 +77,11 @@ All databases expose 5432 inside the container. Host port = API port + 1000.
 | Service | Local | Dev | Container |
 |---------|-------|-----|-----------|
 | Booking App | 4203 | — | 4203 |
+| Documents App | 4206 | — | 4200 |
 | ImmoBroker App | 4205 | — | 4200 |
 | Relatives App | — | 4201 | 4200 |
 | Planning App | 4204 | — | 4200 |
+| Setup App | 4202 | 4202 | 8080 |
 | Web App | 4200 | 4200 | 4200 |
 | Web App Showcase | — | — | 80 |
 | Test Data Generator | 5210 | 5210 | 8080 |
