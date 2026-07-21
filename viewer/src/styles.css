@@ -8,6 +8,17 @@
   padding: 0;
 }
 
+.icon {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.nav-link .icon {
+  margin-right: 0;
+}
+
 :root {
   /* Processity palette */
   --blue-50: #e6f2ff;
@@ -64,6 +75,34 @@
   --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
 }
 
+:root.dark {
+  --color-bg: #1b140c;
+  --color-surface: #241b12;
+  --color-surface-raised: #2e2318;
+  --color-border: #4a3b26;
+  --color-border-subtle: #3a2c1d;
+  --color-text: #f2e9dc;
+  --color-text-secondary: #c9b8a2;
+  --color-text-muted: #93826c;
+  --color-text-tertiary: #7a6b58;
+  --color-primary: #4da3ff;
+  --color-primary-hover: #7cbcff;
+  --color-primary-light: rgba(77, 163, 255, 0.16);
+  --color-code-bg: #241b12;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-focus-ring: rgba(77, 163, 255, 0.35);
+}
+
+:root.dark .header {
+  background: #120d08;
+}
+
+:root.dark .search-input {
+  background: #120d08;
+  border-color: var(--color-border);
+}
+
 html, body {
   height: 100%;
   font-family: var(--font-sans);
@@ -71,6 +110,33 @@ html, body {
   line-height: 1.6;
   color: var(--color-text);
   background: var(--color-bg);
+}
+
+body {
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.theme-toggle:hover {
+  opacity: 0.8;
+}
+
+.theme-toggle .icon {
+  margin-right: 0;
 }
 
 /* ============================================================
@@ -217,7 +283,9 @@ html, body {
 }
 
 .sidebar-content .nav-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px 20px;
   color: var(--color-text-secondary);
   text-decoration: none;
@@ -225,6 +293,17 @@ html, body {
   border-left: 3px solid transparent;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
+
+.sidebar-content .nav-link .icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.sidebar-content .nav-link.type-architecture .icon { color: var(--blue-600); }
+.sidebar-content .nav-link.type-feature .icon { color: #2f855a; }
+.sidebar-content .nav-link.type-howto .icon { color: #c05621; }
+.sidebar-content .nav-link.type-manual .icon { color: #6b46c1; }
+.sidebar-content .nav-link.type-other .icon { color: var(--gray-500); }
 
 .sidebar-content .nav-link:hover {
   background: var(--color-primary-light);
@@ -250,6 +329,18 @@ html, body {
   user-select: none;
   border-left: 3px solid transparent;
   transition: background 0.15s;
+}
+
+.sidebar-content .nav-group-label .nav-group-index-link {
+  flex: 1;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.sidebar-content .nav-group-label .nav-group-index-link:hover {
+  color: var(--color-primary);
 }
 
 .sidebar-content .nav-group-label:hover {
@@ -349,16 +440,44 @@ html, body {
   margin-bottom: 32px;
 }
 
-.welcome-grid {
+.category-section {
+  margin-bottom: 40px;
+}
+
+.category-heading {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  margin-bottom: 16px;
+  border: none;
+  padding: 0;
+}
+
+.category-subheading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 20px 0 12px;
+  border: none;
+  padding: 0;
+}
+
+.category-subheading:first-of-type {
+  margin-top: 0;
+}
+
+.component-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
 }
 
-.welcome-tile {
+.component-tile {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 18px 20px;
   border-radius: 10px;
   border: 1px solid var(--color-border-subtle);
   text-decoration: none;
@@ -367,35 +486,46 @@ html, body {
   cursor: pointer;
 }
 
-.content-inner .welcome-tile:hover {
+.content-inner .component-tile:hover {
   border-color: var(--color-primary);
   box-shadow: 0 4px 12px var(--color-shadow);
   transform: translateY(-2px);
   text-decoration: none;
 }
 
-.welcome-tile-icon {
-  font-size: 28px;
-  margin-bottom: 12px;
-}
-
-.welcome-tile-label {
+.component-tile-title {
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.welcome-tile-desc {
-  font-size: 13px;
+.component-tile-count {
+  font-size: 12px;
   color: var(--color-text-muted);
-  line-height: 1.4;
+  margin-bottom: 10px;
 }
 
-.tile-architecture { border-left: 3px solid var(--blue-600); }
-.tile-feature { border-left: 3px solid #2f855a; }
-.tile-howto { border-left: 3px solid #c05621; }
-.tile-manual { border-left: 3px solid #6b46c1; }
-.tile-other { border-left: 3px solid var(--gray-500); }
+.component-tile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.component-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.badge-architecture { background: var(--blue-50); color: var(--blue-600); }
+.badge-feature { background: #ecfbf4; color: #276749; }
+.badge-howto { background: #fff4e8; color: #9c461b; }
+.badge-manual { background: #f4f0ff; color: #6b46c1; }
+.badge-other { background: var(--gray-100); color: var(--gray-600); }
 
 .loading {
   color: var(--color-text-muted);
@@ -535,8 +665,8 @@ html, body {
   color: var(--color-primary-hover);
 }
 
-.content-inner a.welcome-tile,
-.content-inner a.welcome-tile:hover {
+.content-inner a.component-tile,
+.content-inner a.component-tile:hover {
   text-decoration: none;
   color: var(--color-text);
 }
@@ -569,7 +699,7 @@ html, body {
   background: var(--color-code-bg);
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--gray-800);
+  color: var(--color-text-secondary);
 }
 
 .content-inner pre {
@@ -771,13 +901,18 @@ html, body {
 /* ============================================================
    Mermaid diagrams — scale to fit, zoomable
    ============================================================ */
+/* Guaranteed never to exceed its parent, however wide the diagram inside
+   is - a genuinely wide diagram gets a native horizontal scrollbar (see
+   overflow-x below) rather than relying solely on the custom pan/zoom JS
+   controls, which turned out not to be an obvious enough affordance. */
 .mermaid-zoom-container {
   position: relative;
   border: 1px solid var(--color-border-subtle);
   border-radius: 6px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 16px;
-  background: #ffffff;
+  background: var(--color-surface-raised);
   max-width: 100%;
 }
 
@@ -785,10 +920,431 @@ html, body {
   transform-origin: top left;
 }
 
+/* Render at native size instead of shrinking to fit the column - a
+   diagram with real breadth (many parallel branches) becomes an
+   unreadable thumbnail if forced into that width. The container above
+   scrolls horizontally for anything wider than it (native scrollbar,
+   pinch-zoom, or the custom pan/zoom controls all work). */
 .mermaid-zoom-container .mermaid svg {
   display: block;
-  max-width: 100%;
+  width: auto;
   height: auto;
+}
+
+/* Overview graph: plain DOM/SVG module diagram (see
+   viewer/src/components/overview-graph.ts) - a CSS grid of module boxes
+   (guaranteed non-overlapping by the browser's own box model, not a
+   layout algorithm) that expand in place into their real commands/
+   queries/events/endpoints on click, with a hand-measured SVG overlay
+   drawing lines between related modules. */
+.overview-graph-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.overview-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.overview-flow-combo {
+  position: relative;
+  width: 260px;
+}
+
+.overview-flow-combo-input {
+  width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-raised);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  box-sizing: border-box;
+}
+
+.overview-flow-combo-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.overview-flow-combo-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px var(--color-shadow);
+  z-index: 10;
+}
+
+/* Sticky so a long group's own items still show which heading they're
+   under while scrolling the list, plus a background/border to read as a
+   non-interactive section divider rather than just smaller, grayer text
+   sitting in the same list as the clickable items below it. */
+.overview-flow-combo-group-label {
+  position: sticky;
+  top: 0;
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-900);
+  background: var(--gray-100);
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.overview-flow-combo-group:first-child .overview-flow-combo-group-label {
+  border-top: none;
+}
+
+.overview-flow-combo-item {
+  padding: 6px 12px 6px 20px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.overview-flow-combo-item:hover,
+.overview-flow-combo-item.highlighted {
+  background: var(--blue-50);
+  color: var(--color-primary);
+}
+
+.overview-reset-button {
+  padding: 5px 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: 14px;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px var(--color-shadow);
+  transition: background 0.15s;
+}
+
+.overview-reset-button:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Reuses the exact same colors as .overview-module / .overview-child.kind-*
+   below - a swatch here is just a small standalone square painted with
+   that same border/background pair, so the legend can never drift out of
+   sync with what the boxes actually look like. */
+.overview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.overview-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.overview-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1.5px solid var(--gray-400);
+  background: var(--color-surface-raised);
+}
+
+.overview-legend-swatch.swatch-module {
+  border: 2px solid var(--blue-500);
+  background: var(--blue-50);
+  border-radius: 3px;
+}
+
+.overview-legend-swatch.swatch-start {
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  color: #16a34a;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.overview-legend-swatch.swatch-origin {
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  color: var(--gray-400);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.overview-scroll {
+  position: relative;
+  max-height: 900px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-surface-raised);
+  padding: 20px;
+}
+
+/* Above the boxes (z-index), not behind - a line/arrow terminating on a
+   node nested inside an expanded module has to cross that module's own
+   opaque background first; if the boxes render on top, that whole
+   crossing (arrowhead included) is invisible underneath it. pointer-events
+   stays off so clicks still reach the boxes below. */
+.overview-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.overview-edges path {
+  fill: none;
+  stroke: var(--gray-400);
+  stroke-width: 1.5;
+  /* The container has pointer-events:none (so empty space stays
+     click-through to the boxes below) - re-enabling it just on the path's
+     own stroke lets that thin line still catch hover without needing a
+     separate invisible hit-target overlay. */
+  pointer-events: stroke;
+  transition: stroke-width 0.12s ease, opacity 0.12s ease;
+}
+
+.overview-edges marker path {
+  /* context-stroke: the arrowhead always matches whatever path referenced
+     it via marker-end, so a highlighted (primary-colored) edge gets a
+     matching arrowhead automatically instead of needing a second marker
+     definition swapped in by JS. Falls back to the previous fixed gray if
+     unsupported. */
+  fill: var(--gray-400);
+  fill: context-stroke;
+}
+
+.overview-edge-label {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--color-surface-raised);
+  stroke-width: 3px;
+  pointer-events: auto;
+  transition: font-weight 0.12s ease, opacity 0.12s ease, fill 0.12s ease;
+}
+
+/* Hovering a node or edge bolds it plus whatever it directly connects to,
+   and dims everything else - a transient reading aid layered on top of
+   whatever a click already expanded/selected (see overview-graph.ts
+   hoverNode/hoverEdge). Module boxes deliberately never get this treatment,
+   only individual children and the connecting arrows. Only ever applied
+   together with its "on" sibling, never both at once on the same element. */
+.overview-child.hover-highlight {
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--color-primary);
+  z-index: 3;
+  position: relative;
+}
+
+.overview-child.hover-dim {
+  opacity: 0.4;
+}
+
+.overview-edges path.hover-highlight {
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+
+.overview-edges path.hover-dim {
+  opacity: 0.15;
+}
+
+.overview-edge-label.hover-highlight {
+  font-weight: 700;
+  fill: var(--color-primary);
+  font-size: 10px;
+}
+
+.overview-edge-label.hover-dim {
+  opacity: 0.25;
+}
+
+.overview-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* An expanded module's children wrap into a flex row within whatever
+   column width the grid gave it - at the default ~180-250px cell width
+   that's barely one child wide, forcing everything else into a tall,
+   cramped single-file stack with edges crossing the whole column. Letting
+   an expanded module claim three grid tracks gives its children room to
+   actually wrap into a few short rows instead - a busy module can have
+   20-30 children, so two tracks still left it a narrow, cramped column. */
+.overview-module:has(.overview-module-children:not([hidden])) {
+  grid-column: span 3;
+}
+
+.overview-module {
+  border: 2px solid var(--blue-500);
+  border-radius: 8px;
+  background: var(--blue-50);
+  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.overview-module-header {
+  padding: 12px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gray-900);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Overridden below the default `[hidden] { display: none }` so the
+   collapse/expand of a module's children animates (max-height + opacity)
+   instead of appearing/disappearing instantly. Generous gap/padding here
+   is deliberate: a busy expanded module can have 20-30 children, and at
+   tight spacing the curved edges passing between them made the whole
+   thing unreadable - each row needs enough clearance that an edge's label
+   has somewhere to sit besides on top of a box's own text. */
+.overview-module-children {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 12px;
+  padding: 6px 16px 18px;
+  max-height: 4000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+}
+
+.overview-module-children[hidden] {
+  display: flex;
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.overview-child {
+  border: 1.5px solid var(--gray-400);
+  border-radius: 6px;
+  background: var(--color-surface-raised);
+  padding: 7px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Select/deselect fade+scale (see overview-graph.ts hideAnimated/
+   showAnimated) - `hidden` itself can't transition (display:none has no
+   intermediate state), so these classes animate the visible state first
+   and the element only actually leaves layout once that finishes. */
+.overview-module.leaving,
+.overview-child.leaving,
+.overview-module.entering,
+.overview-child.entering {
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+.overview-child.kind-endpoint, .overview-legend-swatch.kind-endpoint { border-color: #16a34a; background: #dcfce7; color: var(--gray-900); }
+.overview-child.kind-command, .overview-legend-swatch.kind-command { border-color: #d97706; background: #fef3c7; color: var(--gray-900); }
+.overview-child.kind-query, .overview-legend-swatch.kind-query { border-color: #ca8a04; background: #fef9c3; color: var(--gray-900); }
+.overview-child.kind-event, .overview-legend-swatch.kind-event { border-color: #7c3aed; background: #ede9fe; color: var(--gray-900); }
+
+.overview-module.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.overview-module.related {
+  border-color: var(--color-primary);
+}
+
+.overview-child.selected {
+  outline: 2px solid var(--color-primary);
+}
+
+.overview-child.related {
+  outline: 2px solid var(--blue-500);
+}
+
+/* Marks the entry point of a selected flow (see overview-graph.ts
+   selectFlow) - a small filled dot before the label, same idea as a UML
+   sequence diagram's start marker. The class lands on the module or child
+   element itself; for a module that means its nested header. */
+.overview-child.overview-flow-start::before,
+.overview-module.overview-flow-start > .overview-module-header::before {
+  content: "●";
+  color: #16a34a;
+  margin-right: 5px;
+  font-size: 10px;
+}
+
+/* Marks a synthetic producer node (see overview-graph.ts selectFlow) - one
+   that only ever has an OUTGOING edge within this flow's own trace, since it
+   stands for "the specific class that produced this event" rather than
+   something dispatched from elsewhere in the chain. A hollow circle (vs. the
+   flow start's filled dot) keeps it visually distinct: both mean "no
+   incoming arrow is expected here", but for a different reason. */
+.overview-child.overview-flow-origin::before,
+.overview-module.overview-flow-origin > .overview-module-header::before {
+  content: "○";
+  color: var(--gray-400);
+  margin-right: 5px;
+  font-size: 10px;
+}
+
+.overview-flow-panel:empty {
+  display: none;
+}
+
+.overview-flow-panel:not(:empty) {
+  margin: -8px 0 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 14px;
+}
+
+.overview-flow-panel-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.overview-flow-panel ul {
+  margin: 0;
+  padding-left: 20px;
 }
 
 /* ============================================================

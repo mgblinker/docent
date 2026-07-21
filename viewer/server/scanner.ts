@@ -12,6 +12,12 @@ export interface NavNode {
   docType?: string;
 }
 
+// "feature"/"howto" are legacy frontmatter values from before those buckets
+// were merged into "manual" (Manuals and HowTos) - normalize here so the
+// nav tree's docType field matches the tab filter's id, keeping this in
+// sync with the identical alias in src/components/content.ts.
+const TYPE_ALIASES: Record<string, string> = { feature: "manual", howto: "manual" };
+
 export interface DocTypeConfig {
   id: string;
   label: string;
@@ -105,7 +111,7 @@ async function extractFileMeta(filePath: string): Promise<FileMeta> {
     const fmMatch = /^---\n([\s\S]*?)\n---/.exec(content);
     if (fmMatch) {
       const fm = yaml.load(fmMatch[1]) as Record<string, unknown>;
-      if (typeof fm?.type === "string") docType = fm.type;
+      if (typeof fm?.type === "string") docType = TYPE_ALIASES[fm.type] || fm.type;
     }
 
     const titleMatch = /^#\s+(.+)$/m.exec(content);
@@ -172,9 +178,14 @@ function stripSlugPrefix(filePath: string, relativePath: string): string {
   return filePath;
 }
 
-function isNavExcluded(filename: string, opts: ScanOptions): boolean {
-  const base = filename.split("/").pop() || filename;
-  return opts.navExcludeFiles.includes(base);
+function isNavExcluded(relFile: string, opts: ScanOptions): boolean {
+  const base = relFile.split("/").pop() || relFile;
+  return opts.navExcludeFiles.some((pattern) => {
+    if (!pattern.includes("/") && !pattern.includes("*")) {
+      return base === pattern;
+    }
+    return matchGlob(relFile.toLowerCase(), pattern.toLowerCase());
+  });
 }
 
 function isTransparent(dirname: string, opts: ScanOptions): boolean {
@@ -188,8 +199,8 @@ async function processFileEntry(
   opts: ScanOptions,
 ): Promise<NavNode | null> {
   const cleaned = stripSlugPrefix(filename, relativePath);
-  if (isNavExcluded(cleaned, opts)) return null;
   const relFile = joinRelative(relativePath, cleaned);
+  if (isNavExcluded(relFile, opts)) return null;
   if (isExcluded(relFile, opts.exclude)) return null;
   try {
     await fs.access(path.join(dirPath, cleaned));
@@ -229,7 +240,19 @@ async function processDirEntry(
   }
 
   const title = await readDirTitle(subDirPath, titleFromSlug(dirname));
-  return { title, path: subRelPath, children };
+  // index.md is always nav-excluded (it's the folder's own landing page, not
+  // a sibling doc), so it never becomes a child node - without this, a
+  // folder's index.md is unreachable through the UI entirely, since folder
+  // labels otherwise only expand/collapse. Wiring it as the folder node's
+  // own `file` lets the sidebar make the label itself clickable.
+  let indexFile: string | undefined;
+  try {
+    await fs.access(path.join(subDirPath, "index.md"));
+    indexFile = joinRelative(subRelPath, "index.md");
+  } catch {
+    /* no index.md for this folder */
+  }
+  return { title, path: subRelPath, children, ...(indexFile && { file: indexFile }) };
 }
 
 async function processObjectEntry(
@@ -242,8 +265,8 @@ async function processObjectEntry(
   for (const [key, value] of Object.entries(entry)) {
     if (typeof value === "string" && value.endsWith(".md")) {
       const cleaned = stripSlugPrefix(value, relativePath);
-      if (isNavExcluded(cleaned, opts)) continue;
       const relFile = joinRelative(relativePath, cleaned);
+      if (isNavExcluded(relFile, opts)) continue;
       if (isExcluded(relFile, opts.exclude)) continue;
       try {
         await fs.access(path.join(dirPath, cleaned));
@@ -371,6 +394,7 @@ function collapseChains(nodes: NavNode[]): NavNode[] {
     let collapsed = { ...node, children: collapseChains(node.children) };
 
     while (
+      !collapsed.category &&
       collapsed.children?.length === 1 &&
       collapsed.children[0].children &&
       !collapsed.children[0].file

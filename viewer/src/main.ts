@@ -2,6 +2,30 @@ import { renderContent, initRenderer, postRender } from "./components/content";
 import { renderSidebar, setActive, filterSidebar } from "./components/sidebar";
 import { renderBreadcrumbs } from "./components/breadcrumb";
 import { initSearch } from "./components/search";
+import { CATEGORY_ICONS, DOC_TYPE_ICONS, FOLDER_ICON, COMPONENT_ICONS, SUN_ICON, MOON_ICON } from "./components/icons";
+
+const THEME_STORAGE_KEY = "docs-theme";
+
+function applyTheme(theme: "light" | "dark"): void {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  const toggleBtn = document.getElementById("theme-toggle");
+  if (toggleBtn) toggleBtn.innerHTML = theme === "dark" ? SUN_ICON : MOON_ICON;
+}
+
+function initialTheme(): "light" | "dark" {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored === "dark" || stored === "light") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+let currentTheme = initialTheme();
+applyTheme(currentTheme);
+
+document.getElementById("theme-toggle")?.addEventListener("click", () => {
+  currentTheme = currentTheme === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+  applyTheme(currentTheme);
+});
 
 interface NavNode {
   title: string;
@@ -18,88 +42,160 @@ interface DocType {
 }
 
 const navTree: NavNode[] = [];
-let allDocTypes: DocType[] = [];
 
-const TYPE_ICONS: Record<string, string> = {
-  architecture: "&#9645;",
-  feature: "&#9733;",
-  howto: "&#9881;",
-  manual: "&#9776;",
-  other: "&#8943;",
-};
-
-const TYPE_DESCRIPTIONS: Record<string, string> = {
-  architecture: "System design, data models, and architectural decisions",
-  feature: "Feature descriptions, implementations, and component documentation",
-  howto: "Guides, conventions, migration paths, and debugging tips",
-  manual: "User-facing documentation, booking calendars, and UI guides",
-  other: "Documents not yet categorized",
-};
-
-function showWelcome(): void {
-  const contentEl = document.getElementById("content-inner");
-  const tocEl = document.getElementById("toc");
-  if (!contentEl || !tocEl) return;
-
-  const types = [...allDocTypes, { id: "other", label: "Other" }];
-  const tiles = types
-    .map(
-      (dt) => `
-    <a class="welcome-tile tile-${dt.id}" href="#" data-type="${dt.id}">
-      <span class="welcome-tile-icon">${TYPE_ICONS[dt.id] || ""}</span>
-      <span class="welcome-tile-label">${dt.label}</span>
-      <span class="welcome-tile-desc">${TYPE_DESCRIPTIONS[dt.id] || ""}</span>
-    </a>
-  `,
-    )
-    .join("");
-
-  contentEl.innerHTML = `
-    <div class="welcome">
-      <h1>Processity Docs</h1>
-      <p class="welcome-subtitle">Browse documentation by category</p>
-      <div class="welcome-grid">${tiles}</div>
-    </div>
-  `;
-  tocEl.innerHTML = "";
-
-  contentEl.querySelectorAll<HTMLElement>(".welcome-tile").forEach((tile) => {
-    tile.addEventListener("click", (e) => {
-      e.preventDefault();
-      const type = tile.dataset.type;
-      if (type) selectTab(type);
-    });
-  });
+function countDocTypes(node: NavNode, counts: Record<string, number>): number {
+  let total = 0;
+  if (node.file) {
+    const key = node.docType || "other";
+    counts[key] = (counts[key] || 0) + 1;
+    total += 1;
+  }
+  if (node.children) {
+    for (const child of node.children) total += countDocTypes(child, counts);
+  }
+  return total;
 }
 
-function findFirstFile(nodes: NavNode[], docType: string): string | null {
-  for (const node of nodes) {
-    if (node.file) {
-      const matches =
-        docType === "other" ? !node.docType : node.docType === docType;
-      if (matches) return node.file;
-    }
-    if (node.children) {
-      const found = findFirstFile(node.children, docType);
+function findFirstFileAny(node: NavNode): string | null {
+  if (node.file) return node.file;
+  if (node.children) {
+    for (const child of node.children) {
+      const found = findFirstFileAny(child);
       if (found) return found;
     }
   }
   return null;
 }
 
-function selectTab(typeId: string): void {
-  const tabBar = document.getElementById("tab-bar");
-  if (!tabBar) return;
+function renderComponentTile(node: NavNode): string {
+  const counts: Record<string, number> = {};
+  const total = countDocTypes(node, counts);
+  const firstFile = findFirstFileAny(node);
+  const badges = Object.entries(counts)
+    .map(
+      ([type, count]) =>
+        `<span class="component-badge badge-${type}">${DOC_TYPE_ICONS[type] || DOC_TYPE_ICONS.other} ${count}</span>`,
+    )
+    .join("");
+  const componentIcon = COMPONENT_ICONS[node.path.split("/")[0]] || FOLDER_ICON;
 
-  tabBar.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-  const btn = tabBar.querySelector(`[data-tab="${typeId}"]`);
-  if (btn) btn.classList.add("active");
-
-  filterSidebar(typeId);
-
-  const firstFile = findFirstFile(navTree, typeId);
-  if (firstFile) navigateTo(firstFile);
+  return `
+    <a class="component-tile" href="#" data-file="${firstFile || ""}">
+      <span class="component-tile-title">${componentIcon} ${node.title}</span>
+      <span class="component-tile-count">${total} doc${total === 1 ? "" : "s"}</span>
+      <span class="component-tile-badges">${badges}</span>
+    </a>
+  `;
 }
+
+function findFirstFileOfType(node: NavNode, docType: string): string | null {
+  if (node.file) return node.docType === docType ? node.file : null;
+  if (node.children) {
+    for (const child of node.children) {
+      const found = findFirstFileOfType(child, docType);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function countOfType(node: NavNode, docType: string): number {
+  if (node.file) return node.docType === docType ? 1 : 0;
+  let total = 0;
+  if (node.children) {
+    for (const child of node.children) total += countOfType(child, docType);
+  }
+  return total;
+}
+
+// Cross-cutting tile: same look as renderComponentTile, but links to the
+// module's first doc of a specific type (e.g. its architecture doc) and
+// counts only that type - used for the Architecture / Manuals and HowTos
+// sections, which show modules "again" (additive view), not their full doc set.
+function renderCrossCuttingTile(node: NavNode, docType: string): string {
+  const total = countOfType(node, docType);
+  const firstFile = findFirstFileOfType(node, docType);
+  const componentIcon = COMPONENT_ICONS[node.path.split("/")[0]] || FOLDER_ICON;
+
+  return `
+    <a class="component-tile" href="#" data-file="${firstFile || ""}">
+      <span class="component-tile-title">${componentIcon} ${node.title}</span>
+      <span class="component-tile-count">${total} doc${total === 1 ? "" : "s"}</span>
+    </a>
+  `;
+}
+
+function showWelcome(): void {
+  const contentEl = document.getElementById("content-inner");
+  const tocEl = document.getElementById("toc");
+  if (!contentEl || !tocEl) return;
+
+  const categories = navTree.filter((node) => node.category);
+  const flowsCat = categories.find((cat) => cat.category === "Flows");
+  const moduleCats = categories.filter((cat) => cat.category !== "Flows");
+  const allModules = moduleCats.flatMap((cat) => cat.children || []);
+  const architectureModules = allModules.filter((m) => countOfType(m, "architecture") > 0);
+  const manualModules = allModules.filter((m) => countOfType(m, "manual") > 0);
+
+  const flowsSection = flowsCat
+    ? `
+      <section class="category-section">
+        <h2 class="category-heading">${CATEGORY_ICONS.Flows || ""} Flows</h2>
+        <div class="component-grid">${(flowsCat.children || []).map(renderComponentTile).join("")}</div>
+      </section>
+    `
+    : "";
+
+  const architectureSection = architectureModules.length
+    ? `
+      <section class="category-section">
+        <h2 class="category-heading">${CATEGORY_ICONS.Architecture || ""} Architecture</h2>
+        <div class="component-grid">${architectureModules.map((m) => renderCrossCuttingTile(m, "architecture")).join("")}</div>
+      </section>
+    `
+    : "";
+
+  const modulesSection = `
+    <section class="category-section">
+      <h2 class="category-heading">${CATEGORY_ICONS["Modules and Services"] || ""} Modules and Services</h2>
+      ${moduleCats
+        .map(
+          (cat) => `
+        <h3 class="category-subheading">${CATEGORY_ICONS[cat.category || ""] || ""} ${cat.category}</h3>
+        <div class="component-grid">${(cat.children || []).map(renderComponentTile).join("")}</div>
+      `,
+        )
+        .join("")}
+    </section>
+  `;
+
+  const manualSection = manualModules.length
+    ? `
+      <section class="category-section">
+        <h2 class="category-heading">${CATEGORY_ICONS["Manuals and HowTos"] || ""} Manuals and HowTos</h2>
+        <div class="component-grid">${manualModules.map((m) => renderCrossCuttingTile(m, "manual")).join("")}</div>
+      </section>
+    `
+    : "";
+
+  contentEl.innerHTML = `
+    <div class="welcome">
+      <h1>Processity Docs</h1>
+      <p class="welcome-subtitle">Browse by section below, or use the tabs above to browse by document type across all components</p>
+      ${flowsSection}${architectureSection}${modulesSection}${manualSection}
+    </div>
+  `;
+  tocEl.innerHTML = "";
+
+  contentEl.querySelectorAll<HTMLElement>(".component-tile").forEach((tile) => {
+    tile.addEventListener("click", (e) => {
+      e.preventDefault();
+      const file = tile.dataset.file;
+      if (file) navigateTo(file);
+    });
+  });
+}
+
 
 async function loadPage(
   docPath: string,
@@ -180,30 +276,29 @@ function navigateTo(docPath: string, anchor: string | null = null): void {
 
 function renderTabs(docTypes: DocType[]): void {
   const tabBar = document.getElementById("tab-bar");
-  if (!tabBar || docTypes.length === 0) return;
+  if (!tabBar) return;
 
-  const allTypes = [...docTypes, { id: "other", label: "Other" }];
+  const homeTab: DocType = { id: "modules", label: "Modules and Services" };
+  const allTypes = [homeTab, ...docTypes, { id: "other", label: "Other" }];
 
   tabBar.innerHTML = allTypes
-    .map((dt) => `<button class="tab" data-tab="${dt.id}">${dt.label}</button>`)
+    .map(
+      (dt) =>
+        `<button class="tab${dt.id === "modules" ? " active" : ""}" data-tab="${dt.id}">${DOC_TYPE_ICONS[dt.id] || DOC_TYPE_ICONS.other} ${dt.label}</button>`,
+    )
     .join("");
 
   tabBar.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest(".tab") as HTMLElement;
     if (!btn) return;
 
-    const wasActive = btn.classList.contains("active");
     tabBar
       .querySelectorAll(".tab")
       .forEach((t) => t.classList.remove("active"));
+    btn.classList.add("active");
 
-    if (wasActive) {
-      filterSidebar(null);
-    } else {
-      btn.classList.add("active");
-      const tab = btn.dataset.tab || null;
-      filterSidebar(tab);
-    }
+    const tab = btn.dataset.tab || "modules";
+    filterSidebar(tab === "modules" ? null : tab);
   });
 }
 
@@ -220,7 +315,6 @@ try {
 
   navTree.length = 0;
   navTree.push(...tree);
-  allDocTypes = config.docTypes;
   renderSidebar(navTree, navigateTo);
   renderTabs(config.docTypes);
 

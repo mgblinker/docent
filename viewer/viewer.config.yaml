@@ -9,6 +9,11 @@ navExcludeFiles:
   - index.md
   - scope.md
   - backlog.md
+  - IMPROVEMENTS.md
+  - REORGANIZATION.md
+  - "*SUMMARY.md"
+  - "**/src/**/README.md"
+  - "**/src/**/readme.md"
 
 transparentFolders:
   - .claude
@@ -18,8 +23,15 @@ transparentFolders:
   - Documentation
 
 # Document types for tab navigation
-# Each doc gets a type via frontmatter `type:` or auto-inference
+# Each doc gets a type via frontmatter `type:` or auto-inference. Order
+# matters: first pattern match wins, so more specific types are listed
+# before more general ones (flows/architecture before the catch-all-ish
+# howto/feature patterns).
 docTypes:
+  - id: flows
+    label: Flows
+    patterns:
+      - "flows/**"
   - id: architecture
     label: Architecture
     patterns:
@@ -28,29 +40,19 @@ docTypes:
       - "**/*architecture*.md"
       - "**/*migration*.md"
       - "**/*data-model*.md"
-  - id: feature
-    label: Features
+  - id: manual
+    label: Manuals and HowTos
     patterns:
       - "**/*feature*.md"
-      - "**/*implementation*.md"
-      - "**/*summary*.md"
-      - "**/*integration*.md"
-      - "**/*refactor*.md"
-      - "**/README.md"
-      - "**/IMPROVEMENTS.md"
-  - id: howto
-    label: How-tos
-    patterns:
       - "**/*guide*.md"
+      - "**/*integration*.md"
+      - "**/*implementation*.md"
       - "**/*debugging*.md"
       - "**/*diagnostic*.md"
       - "**/*conventions*.md"
       - "**/*quick-reference*.md"
       - "**/*getting-started*.md"
       - "**/*test-flow*.md"
-  - id: manual
-    label: User Manuals
-    patterns:
       - "**/*manual*.md"
       - "**/*user*.md"
       - "**/*booking*.md"

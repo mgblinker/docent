@@ -1,3 +1,5 @@
+import { DOC_TYPE_ICONS, FOLDER_ICON } from "./icons";
+
 interface NavNode {
   title: string;
   path: string;
@@ -11,10 +13,9 @@ let navigateFn: (path: string) => void;
 let sidebarEl: HTMLElement;
 let fullTree: NavNode[] = [];
 
-function expandState(key: string, depth: number): boolean {
+function expandState(key: string): boolean {
   const stored = sessionStorage.getItem(`nav:${key}`);
-  if (stored) return stored === 'expanded';
-  return depth === 0;
+  return stored === 'expanded';
 }
 
 function setExpandState(key: string, expanded: boolean): void {
@@ -25,6 +26,18 @@ function filterTree(nodes: NavNode[], docType: string | null): NavNode[] {
   if (!docType) return nodes;
 
   return nodes.reduce<NavNode[]>((acc, node) => {
+    // Check children first: a folder can carry both `file` (its own
+    // index.md) and `children` since folder labels became clickable, so
+    // `file` alone no longer means "pure leaf" - filtering still needs to
+    // descend into children even when the folder itself has a file.
+    if (node.children) {
+      const filtered = filterTree(node.children, docType);
+      if (filtered.length > 0) {
+        acc.push({ ...node, children: filtered });
+      }
+      return acc;
+    }
+
     if (node.file) {
       const matches = docType === 'other'
         ? !node.docType
@@ -32,32 +45,30 @@ function filterTree(nodes: NavNode[], docType: string | null): NavNode[] {
       if (matches) acc.push(node);
       return acc;
     }
-
-    if (node.children) {
-      const filtered = filterTree(node.children, docType);
-      if (filtered.length > 0) {
-        acc.push({ ...node, children: filtered });
-      }
-    }
     return acc;
   }, []);
 }
 
 function renderNode(node: NavNode, depth: number): string {
-  if (node.file) {
-    return `<li><a class="nav-link" href="#" data-path="${node.file}" style="padding-left: ${20 + depth * 12}px">${node.title}</a></li>`;
+  if (node.file && !node.children) {
+    const icon = DOC_TYPE_ICONS[node.docType || 'other'] || DOC_TYPE_ICONS.other;
+    return `<li><a class="nav-link type-${node.docType || 'other'}" href="#" data-path="${node.file}" style="padding-left: ${20 + depth * 12}px">${icon}<span>${node.title}</span></a></li>`;
   }
 
   if (node.children && node.children.length > 0) {
-    const expanded = expandState(node.path, depth);
+    const expanded = expandState(node.path);
     const chevronCls = expanded ? 'chevron' : 'chevron collapsed';
     const groupCls = expanded ? 'nav-group' : 'nav-group collapsed';
 
     const childrenHtml = node.children.map(c => renderNode(c, depth + 1)).join('');
 
+    const labelInner = node.file
+      ? `<a class="nav-link nav-group-index-link" href="#" data-path="${node.file}">${FOLDER_ICON}${node.title}</a>`
+      : `<span>${FOLDER_ICON}${node.title}</span>`;
+
     return `<li class="${groupCls}" data-group="${node.path}">
       <div class="nav-group-label" style="padding-left: ${20 + depth * 12}px" data-toggle="${node.path}">
-        <span>${node.title}</span>
+        ${labelInner}
         <span class="${chevronCls}">&#9660;</span>
       </div>
       <ul>${childrenHtml}</ul>

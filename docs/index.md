@@ -2,6 +2,12 @@
 
 Welcome to the Processity platform documentation. This site aggregates documentation from all repositories.
 
+## Flows
+
+| Component | Path |
+|-----------|------|
+| [Event & Command Flows](flows/) | `flows/` |
+
 ## Platform
 
 | Component | Path |
@@ -10,6 +16,7 @@ Welcome to the Processity platform documentation. This site aggregates documenta
 | [Backend](backend/) | `backend/` |
 | [Event Bus](eventbus/) | `eventbus/` |
 | [Shared Kernel](sharedkernel/) | `sharedkernel/` |
+| [Testing Kernel](testingkernel/) | `testingkernel/` |
 | [Web App Angular](webapp-angular/) | `webapp-angular/` |
 
 ## Services
@@ -27,17 +34,17 @@ Welcome to the Processity platform documentation. This site aggregates documenta
 | [Settings Service](settingsservice/) | `settingsservice/` |
 | [Tenant Provisioning](tenantprovisioning/) | `tenantprovisioning/` |
 
-## Infrastructure
-
-| Component | Path |
-|-----------|------|
-| [CICD](cicd/) | `cicd/` |
-| [Testing Kernel](testingkernel/) | `testingkernel/` |
-| [Website](website/) | `website/` |
-
 ## Products
 
 | Component | Path |
 |-----------|------|
 | [Immo Broker](immobroker/) | `immobroker/` |
 | [Planning](planning/) | `planning/` |
+| [Website](website/) | `website/` |
+
+## Infrastructure
+
+| Component | Path |
+|-----------|------|
+| [Architecture](architecture/) | `architecture/` |
+| [CICD](cicd/) | `cicd/` |

@@ -1,11 +1,14 @@
 title: Processity Docs
 nav:
   - index.md
+  - Flows:
+      - flows
   - Platform:
       - apigateway
       - backend
       - eventbus
       - sharedkernel
+      - testingkernel
       - webapp-angular
   - Services:
       - authentication
@@ -21,8 +24,7 @@ nav:
   - Products:
       - immobroker
       - planning
+      - website
   - Infrastructure:
       - architecture
       - cicd
-      - testingkernel
-      - website
