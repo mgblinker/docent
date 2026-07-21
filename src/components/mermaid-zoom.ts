@@ -11,6 +11,32 @@ function findSvg(root: Element): SVGSVGElement | null {
   return null;
 }
 
+// Mermaid's <svg> only carries a viewBox (an aspect ratio, not an intrinsic
+// pixel size) plus a width="100%" attribute, so plain CSS auto-sizing just
+// fills the containing block - that's what was silently shrinking wide
+// diagrams down to the column width, text and all. This computes the
+// scale-to-fit against the *container's* width but floors it at MIN_SCALE
+// so text never shrinks past legible - a diagram that would need to go
+// smaller than that to fully fit instead overflows (the container scrolls)
+// only past that floor, rather than either always cramming to fit or
+// always rendering at full native size regardless of how that compares to
+// the available width.
+const MIN_SCALE = 0.6;
+
+function applyScaledWidth(svg: SVGSVGElement, container: HTMLElement): void {
+  const viewBox = svg.getAttribute('viewBox');
+  if (!viewBox) return;
+  const parts = viewBox.trim().split(/\s+/).map(Number);
+  if (parts.length !== 4 || !Number.isFinite(parts[2]) || parts[2] <= 0) return;
+  const nativeWidth = parts[2];
+  const containerWidth = container.clientWidth || container.getBoundingClientRect().width;
+  if (!containerWidth) return;
+  const fitScale = containerWidth / nativeWidth;
+  const appliedScale = Math.min(1, Math.max(fitScale, MIN_SCALE));
+  svg.style.width = `${nativeWidth * appliedScale}px`;
+  svg.style.maxWidth = 'none';
+}
+
 function initZoomForDiv(div: HTMLElement): void {
   if (div.classList.contains('zoom-initialized')) return;
   div.classList.add('zoom-initialized');
@@ -26,6 +52,7 @@ function initZoomForDiv(div: HTMLElement): void {
   const adjustContainerToContent = () => {
     const svg = findSvg(div);
     if (!svg) return;
+    applyScaledWidth(svg, container);
     const rect = svg.getBoundingClientRect();
     const padding = 10;
     if (rect.height && Number.isFinite(rect.height)) {
