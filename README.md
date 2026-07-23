@@ -1,13 +1,12 @@
 # Processity Docs
 
-A documentation viewer (`viewer/`) plus a generator pipeline (`tools/`) that
-mines this machine's sibling repos for cross-service flow diagrams.
+Documentation site for Processity: `docs/` rendered by [Docent](https://github.com/mgblinker/docent),
+an open-source viewer + flow-doc generator originally built for and split
+out of this repo. `viewer/` and `tools/` here are **vendored via `git
+subtree`, not developed in place** — see "Updating from Docent" below
+before changing anything in either directory.
 
 ## Viewer
-
-Serves `docs/` as a searchable, browsable site with tabs by document type
-(Flows, Architecture, Manuals and HowTos, ...) and a sidebar grouped by
-module/service.
 
 ```
 cd viewer
@@ -15,12 +14,14 @@ npm install
 npm run dev     # http://localhost:5173, proxies API to a local tsx server
 ```
 
-Configuration lives in `viewer/viewer.config.yaml` — `docsDir`, excluded
-globs, and `docTypes` (glob patterns that assign each doc a tab).
+Configuration lives in `viewer/viewer.config.yaml` — this repo's copy sets
+`siteTitle: Processity Docs` (Docent's own default is just "Docent");
+that's the one line expected to permanently differ from upstream on every
+sync, see below.
 
-The nav tree and search index are rebuilt from `docs/` every time the server
-starts (`viewer/server/index.ts`), including on every container rebuild —
-nothing needs to be regenerated or cached ahead of time for those two.
+The nav tree and search index rebuild from `docs/` every time the server
+starts, including on every container rebuild — nothing needs to be
+regenerated or cached ahead of time for those two.
 
 ## Flow-doc generation
 
@@ -36,21 +37,37 @@ Regenerate it manually, from the repo root:
 node tools/generate-docs.mjs
 ```
 
-Configure where those sibling repos live in `generate-docs.config.json`
-(repo root):
-
-```json
-{
-  "projectsRoot": "/absolute/path/to/your/projects",
-  "repoNames": ["Processity.Backend", "Processity.ApiGateway", "..."],
-  "apiGatewayConfigDir": "Processity.ApiGateway/.docker/local/config",
-  "angularSrcDir": "Processity.WebApp.Angular/src"
-}
-```
+Paths are configured in `generate-docs.config.json` (repo root, real
+values for this machine's checkout layout — never hand real paths to a
+script in `tools/` itself, that's the whole point of the config file).
 
 Do not hand-edit anything under `docs/flows/` — it gets wiped and
 regenerated wholesale on the next run (see `tools/generate-docs.mjs`'s
 `PRESERVE` set for the one exception).
+
+## Updating from Docent
+
+`viewer/` and `tools/` are pulled in via `git subtree` from
+[mgblinker/docent](https://github.com/mgblinker/docent) (`main` branch),
+squashed to one commit per sync so this repo's history stays focused on
+Processity-relevant changes:
+
+```
+git subtree pull --prefix=viewer docent main --squash
+git subtree pull --prefix=tools docent main --squash
+```
+
+(First time in a fresh clone: `git remote add docent https://github.com/mgblinker/docent.git`.)
+
+After pulling, re-check `viewer/viewer.config.yaml`'s `siteTitle` — an
+upstream change to Docent's own default will silently overwrite it back
+to "Docent" every time, since that line has no merge-conflict marker to
+stop it.
+
+**Found a bug in the viewer or the generator itself (not in Processity's
+docs content or config)?** Fix it upstream in `docent`, not here — a fix
+made only in this repo's copy will be silently clobbered by the next
+`subtree pull`, and won't benefit from Docent's own CI/review either.
 
 ## Deployment
 
