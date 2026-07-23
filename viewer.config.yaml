@@ -59,3 +59,4 @@ docTypes:
       - "**/*usage*.md"
       - "**/*quick-start*.md"
       - "**/*tooltip*.md"
+      - "**/*setup*.md"

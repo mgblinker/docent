@@ -60,8 +60,35 @@ function isGenericTitle(title: string): boolean {
   return stripped === "readme" || stripped === "readmemd";
 }
 
+// Folder slugs like "automationservice" or "tenantprovisioning" are one
+// unbroken lowercase word - toTitleCase only splits on hyphen/underscore/
+// camelCase boundaries, so it can't find a word break on its own and the
+// whole thing renders as "Automationservice". Greedily tokenize against this
+// repo's own vocabulary (module/service names from CLAUDE.md) first, longest
+// word wins at each position, so toTitleCase has real word breaks to work
+// with. Falls back to the untouched slug if it can't be fully tokenized.
+const KNOWN_WORDS = [
+  "authentication", "automation", "billing", "calendar", "communication",
+  "integration", "licensing", "logging", "mapping", "phone", "auth",
+  "process", "insights", "realtime", "interaction", "settings", "tenant",
+  "provisioning", "service", "api", "gateway", "shared", "kernel",
+  "testing", "immo", "broker", "event", "bus", "planning", "file",
+].sort((a, b) => b.length - a.length);
+
+function splitKnownWords(slug: string): string {
+  let i = 0;
+  const parts: string[] = [];
+  while (i < slug.length) {
+    const match = KNOWN_WORDS.find((w) => slug.startsWith(w, i));
+    if (!match) return slug;
+    parts.push(match);
+    i += match.length;
+  }
+  return parts.join("-");
+}
+
 function titleFromSlug(slug: string): string {
-  return toTitleCase(slug).replace(/\b(Api|Ui|Cicd|Ocr|Pdf)\b/g, (m) =>
+  return toTitleCase(splitKnownWords(slug)).replace(/\b(Api|Ui|Cicd|Ocr|Pdf)\b/g, (m) =>
     m.toUpperCase(),
   );
 }
@@ -334,6 +361,30 @@ async function processNavEntries(
   return nodes;
 }
 
+// A hand-curated _nav.yml only lists what someone remembered to add - a new
+// service/module folder dropped in without a matching entry would otherwise
+// be silently invisible in every tab, not just filtered out of one. Collect
+// every name (dir or file) the nav file already references at this level, so
+// autoGenerateNav can auto-append anything left over, keeping the tree fully
+// dynamic while still honoring curated ordering/grouping for known entries.
+function collectReferencedNames(entries: NavEntry[]): Set<string> {
+  const names = new Set<string>();
+  for (const entry of entries) {
+    if (typeof entry === "string") {
+      names.add(entry);
+    } else if (typeof entry === "object") {
+      for (const value of Object.values(entry)) {
+        if (typeof value === "string") {
+          names.add(value);
+        } else if (Array.isArray(value)) {
+          for (const n of collectReferencedNames(value)) names.add(n);
+        }
+      }
+    }
+  }
+  return names;
+}
+
 async function scanDir(
   dirPath: string,
   relativePath: string,
@@ -341,7 +392,10 @@ async function scanDir(
 ): Promise<NavNode[]> {
   const navYml = await readNavYml(dirPath);
   if (navYml?.nav) {
-    return processNavEntries(navYml.nav, dirPath, relativePath, opts);
+    const explicit = await processNavEntries(navYml.nav, dirPath, relativePath, opts);
+    const referenced = collectReferencedNames(navYml.nav);
+    const extra = await autoGenerateNav(dirPath, relativePath, opts, referenced);
+    return [...explicit, ...extra];
   }
   return autoGenerateNav(dirPath, relativePath, opts);
 }
@@ -350,6 +404,7 @@ async function autoGenerateNav(
   dirPath: string,
   relativePath: string,
   opts: ScanOptions,
+  excludeNames: Set<string> = new Set(),
 ): Promise<NavNode[]> {
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
   const nodes: NavNode[] = [];
@@ -358,6 +413,7 @@ async function autoGenerateNav(
 
   for (const entry of entries) {
     if (entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
+    if (excludeNames.has(entry.name)) continue;
     if (entry.isFile() && entry.name.endsWith(".md")) {
       mdFiles.push(entry.name);
     } else if (entry.isDirectory()) {

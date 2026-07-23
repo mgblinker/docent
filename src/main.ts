@@ -197,14 +197,36 @@ function showWelcome(): void {
 }
 
 
+// The dashboard (index.md) is a cross-cutting tile grid, not a doc in any
+// one section - showing the tree or highlighting a tab would imply it
+// belongs to whichever branch/type happened to be selected before, which is
+// misleading. Force both to a neutral "nothing selected" state whenever it's
+// shown, and restore them once the user drills into an actual doc.
+function setDashboardNavVisible(visible: boolean): void {
+  document.getElementById("sidebar")?.classList.toggle("dashboard-hidden", !visible);
+  document.querySelector(".layout")?.classList.toggle("dashboard-hidden", !visible);
+}
+
+function setActiveTab(tabId: string | null): void {
+  const tabBar = document.getElementById("tab-bar");
+  tabBar?.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+  if (tabId) {
+    tabBar?.querySelector(`.tab[data-tab="${tabId}"]`)?.classList.add("active");
+  }
+}
+
 async function loadPage(
   docPath: string,
   anchor: string | null = null,
 ): Promise<void> {
   if (docPath === "index.md") {
     showWelcome();
+    setDashboardNavVisible(false);
+    setActiveTab(null);
     return;
   }
+
+  setDashboardNavVisible(true);
 
   const contentEl = document.getElementById("content-inner");
   const tocEl = document.getElementById("toc");
@@ -284,7 +306,7 @@ function renderTabs(docTypes: DocType[]): void {
   tabBar.innerHTML = allTypes
     .map(
       (dt) =>
-        `<button class="tab${dt.id === "modules" ? " active" : ""}" data-tab="${dt.id}">${DOC_TYPE_ICONS[dt.id] || DOC_TYPE_ICONS.other} ${dt.label}</button>`,
+        `<button class="tab" data-tab="${dt.id}">${DOC_TYPE_ICONS[dt.id] || DOC_TYPE_ICONS.other} ${dt.label}</button>`,
     )
     .join("");
 
@@ -292,12 +314,23 @@ function renderTabs(docTypes: DocType[]): void {
     const btn = (e.target as HTMLElement).closest(".tab") as HTMLElement;
     if (!btn) return;
 
+    // Clicking the already-active tab again is the same gesture as clicking
+    // home: fold the sidebar back away rather than re-showing what's already
+    // showing.
+    const isReclick = btn.classList.contains("active") && !sidebar?.classList.contains("dashboard-hidden");
+    if (isReclick) {
+      tabBar.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      setDashboardNavVisible(false);
+      return;
+    }
+
     tabBar
       .querySelectorAll(".tab")
       .forEach((t) => t.classList.remove("active"));
     btn.classList.add("active");
 
     const tab = btn.dataset.tab || "modules";
+    setDashboardNavVisible(true);
     filterSidebar(tab === "modules" ? null : tab);
   });
 }
@@ -320,6 +353,10 @@ try {
 
   const titleEl = document.querySelector(".site-title");
   if (titleEl) titleEl.textContent = config.siteTitle;
+  titleEl?.addEventListener("click", () => {
+    setDashboardNavVisible(false);
+    setActiveTab(null);
+  });
 } catch {
   const sidebarContent = document.getElementById("sidebar-content");
   if (sidebarContent) {
