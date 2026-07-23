@@ -18,7 +18,7 @@ flowchart TB
   EP_ContactRequestControllerAssignAsync[["ContactRequestController.AssignAsync<br/>(PUT)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_AssignContactRequestCommand("Assign Contact Request")
-  EP_ContactRequestControllerAssignAsync -->|| REQ_AssignContactRequestCommand
+  EP_ContactRequestControllerAssignAsync --> REQ_AssignContactRequestCommand
   REQ_AssignContactRequestCommand -->|AssignContactRequestCommandHandler| MOD_Backend_Communications
   EVT_action_required{{"Action Required"}}
   MOD_Backend_Communications -->|AssignContactRequestCommandHandler| EVT_action_required

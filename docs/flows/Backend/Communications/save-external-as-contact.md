@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerSaveExternalAsContactAsync[["MeetingController.SaveExternalAsContactAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_SaveExternalAsContactCommand("Save External As Contact")
-  EP_MeetingControllerSaveExternalAsContactAsync -->|| REQ_SaveExternalAsContactCommand
+  EP_MeetingControllerSaveExternalAsContactAsync --> REQ_SaveExternalAsContactCommand
   REQ_SaveExternalAsContactCommand -->|SaveExternalAsContactCommandHandler| MOD_Backend_Communications
   REQ_CreateContactCommand("Create Contact")
   MOD_Backend_Communications -->|SaveExternalAsContactCommandHandler| REQ_CreateContactCommand

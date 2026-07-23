@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerCancelMeetingAsync[["MeetingController.CancelMeetingAsync<br/>(DELETE)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_CancelMeetingCommand("Cancel Meeting")
-  EP_MeetingControllerCancelMeetingAsync -->|| REQ_CancelMeetingCommand
+  EP_MeetingControllerCancelMeetingAsync --> REQ_CancelMeetingCommand
   REQ_CancelMeetingCommand -->|CancelMeetingCommandHandler| MOD_Backend_Communications
   EVT_meeting_cancelled{{"Meeting Cancelled"}}
   MOD_Backend_Communications -->|CancelMeetingCommandHandler| EVT_meeting_cancelled

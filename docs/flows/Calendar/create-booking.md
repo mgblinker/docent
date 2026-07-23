@@ -18,7 +18,7 @@ flowchart TB
   EP_PublicBookingControllerCreateBooking[["PublicBookingController.CreateBooking<br/>(POST)"]]
   MOD_Calendar["Calendar"]
   REQ_CreateBookingCommand("Create Booking")
-  EP_PublicBookingControllerCreateBooking -->|| REQ_CreateBookingCommand
+  EP_PublicBookingControllerCreateBooking --> REQ_CreateBookingCommand
   REQ_CreateBookingCommand -->|CreateBookingCommandHandler| MOD_Calendar
   EVT_booking_created{{"Booking Created"}}
   MOD_Calendar -->|CreateBookingCommandHandler| EVT_booking_created

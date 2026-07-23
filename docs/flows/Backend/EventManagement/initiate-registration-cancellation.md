@@ -18,7 +18,7 @@ flowchart TB
   EP_InitiateRegistrationCancellationControllerInitiateRegistrationCancellation[["InitiateRegistrationCancellationController.InitiateRegistrationCancellation<br/>(PUT)"]]
   MOD_Backend_EventManagement["Backend/EventManagement"]
   REQ_InitiateRegistrationCancellationCommand("Initiate Registration<br/>Cancellation")
-  EP_InitiateRegistrationCancellationControllerInitiateRegistrationCancellation -->|| REQ_InitiateRegistrationCancellationCommand
+  EP_InitiateRegistrationCancellationControllerInitiateRegistrationCancellation --> REQ_InitiateRegistrationCancellationCommand
   REQ_InitiateRegistrationCancellationCommand -->|InitiateRegistrationCancellationCommandHandler| MOD_Backend_EventManagement
   EVT_email_send{{"email.send"}}
   MOD_Backend_EventManagement -->|InitiateRegistrationCancellationCommandHandler| EVT_email_send

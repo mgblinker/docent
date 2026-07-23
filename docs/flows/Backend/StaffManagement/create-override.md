@@ -18,7 +18,7 @@ flowchart TB
   EP_EmployeeAvailabilityControllerCreateOverride[["EmployeeAvailabilityController.CreateOverride<br/>(POST)"]]
   MOD_Backend_StaffManagement["Backend/StaffManagement"]
   REQ_CreateAvailabilityOverrideCommand("Create Availability Override")
-  EP_EmployeeAvailabilityControllerCreateOverride -->|| REQ_CreateAvailabilityOverrideCommand
+  EP_EmployeeAvailabilityControllerCreateOverride --> REQ_CreateAvailabilityOverrideCommand
   REQ_CreateAvailabilityOverrideCommand -->|CreateAvailabilityOverrideCommandHandler| MOD_Backend_StaffManagement
   EVT_availability_override_changed{{"availability-override.changed"}}
   MOD_Backend_StaffManagement -->|CreateAvailabilityOverrideCommandHandler| EVT_availability_override_changed

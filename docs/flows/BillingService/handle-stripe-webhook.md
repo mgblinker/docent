@@ -18,7 +18,7 @@ flowchart TB
   EP_WebhooksControllerHandleStripeWebhook[["WebhooksController.HandleStripeWebhook<br/>(POST)"]]
   MOD_BillingService["BillingService"]
   EVT_licensing_purchase_completed{{"licensing.purchase.completed"}}
-  EP_WebhooksControllerHandleStripeWebhook -->|| EVT_licensing_purchase_completed
+  EP_WebhooksControllerHandleStripeWebhook --> EVT_licensing_purchase_completed
   MOD_LicensingService["LicensingService"]
   EVT_licensing_purchase_completed -->|PurchaseCompletedEventHandler| MOD_LicensingService
   EVT_licensing_tenant_licenses_activated{{"licensing.tenant-licenses.activated"}}

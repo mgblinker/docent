@@ -18,7 +18,7 @@ flowchart TB
   EP_StudentControllerCreateStudent[["StudentController.CreateStudent<br/>(POST)"]]
   MOD_Backend_Education["Backend/Education"]
   REQ_CreateStudentCommand("Create Student")
-  EP_StudentControllerCreateStudent -->|| REQ_CreateStudentCommand
+  EP_StudentControllerCreateStudent --> REQ_CreateStudentCommand
   REQ_CreateStudentCommand -->|CreateStudentCommandHandler| MOD_Backend_Education
   EVT_education_student_added{{"Student Added"}}
   MOD_Backend_Education -->|CreateStudentCommandHandler| EVT_education_student_added

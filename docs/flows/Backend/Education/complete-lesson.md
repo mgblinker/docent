@@ -18,7 +18,7 @@ flowchart TB
   EP_ElearningControllerCompleteLesson[["ElearningController.CompleteLesson<br/>(POST)"]]
   MOD_Backend_Education["Backend/Education"]
   REQ_CompleteElearningLessonCommand("Complete Elearning Lesson")
-  EP_ElearningControllerCompleteLesson -->|| REQ_CompleteElearningLessonCommand
+  EP_ElearningControllerCompleteLesson --> REQ_CompleteElearningLessonCommand
   REQ_CompleteElearningLessonCommand -->|CompleteElearningLessonHandler| MOD_Backend_Education
   EVT_education_student_learning_path_completed{{"education.student.learning-path.completed"}}
   MOD_Backend_Education -->|CompleteElearningLessonHandler| EVT_education_student_learning_path_completed

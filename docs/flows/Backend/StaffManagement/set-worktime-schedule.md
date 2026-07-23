@@ -18,7 +18,7 @@ flowchart TB
   EP_EmployeeAvailabilityControllerSetWorktimeSchedule[["EmployeeAvailabilityController.SetWorktimeSchedule<br/>(PUT)"]]
   MOD_Backend_StaffManagement["Backend/StaffManagement"]
   REQ_SetWorktimeScheduleCommand("Set Worktime Schedule")
-  EP_EmployeeAvailabilityControllerSetWorktimeSchedule -->|| REQ_SetWorktimeScheduleCommand
+  EP_EmployeeAvailabilityControllerSetWorktimeSchedule --> REQ_SetWorktimeScheduleCommand
   REQ_SetWorktimeScheduleCommand -->|SetWorktimeScheduleCommandHandler| MOD_Backend_StaffManagement
   REQ_GetContactUserIdQuery[/"Get Contact User Id"/]
   MOD_Backend_StaffManagement -->|SetWorktimeScheduleCommandHandler| REQ_GetContactUserIdQuery

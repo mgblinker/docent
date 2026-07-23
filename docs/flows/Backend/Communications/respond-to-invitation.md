@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerRespondToInvitationAsync[["MeetingController.RespondToInvitationAsync<br/>(PUT)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_RespondToInvitationCommand("Respond To Invitation")
-  EP_MeetingControllerRespondToInvitationAsync -->|| REQ_RespondToInvitationCommand
+  EP_MeetingControllerRespondToInvitationAsync --> REQ_RespondToInvitationCommand
   REQ_RespondToInvitationCommand -->|RespondToInvitationCommandHandler| MOD_Backend_Communications
   EVT_invitation_response_received{{"Invitation Response Received"}}
   MOD_Backend_Communications -->|RespondToInvitationCommandHandler| EVT_invitation_response_received

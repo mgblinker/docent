@@ -18,7 +18,7 @@ flowchart TB
   EP_ExchangePhoneTokenControllerExchangePhoneToken[["ExchangePhoneTokenController.ExchangePhoneToken<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_ExchangePhoneTokenCommand("Exchange Phone Token")
-  EP_ExchangePhoneTokenControllerExchangePhoneToken -->|| REQ_ExchangePhoneTokenCommand
+  EP_ExchangePhoneTokenControllerExchangePhoneToken --> REQ_ExchangePhoneTokenCommand
   REQ_ExchangePhoneTokenCommand -->|ExchangePhoneTokenCommandHandler| MOD_Authentication
   EVT_phone_user_registered{{"phone.user.registered"}}
   MOD_Authentication -->|ExchangePhoneTokenCommandHandler| EVT_phone_user_registered

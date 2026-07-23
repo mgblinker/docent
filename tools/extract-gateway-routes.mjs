@@ -12,8 +12,10 @@
 
 import fs from "fs";
 import path from "path";
+import { loadConfig } from "./lib/config.mjs";
 
-const CONFIG_DIR = "/Users/michael/Projects/Processity.ApiGateway/.docker/local/config";
+const config = loadConfig();
+const CONFIG_DIR = path.join(config.projectsRoot, config.apiGatewayConfigDir);
 
 function serviceNameFromHost(host) {
   // "processity-calendar-service-local" -> "Calendar"

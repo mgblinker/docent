@@ -18,7 +18,7 @@ flowchart TB
   EP_EmployeeAvailabilityControllerSetAvailability[["EmployeeAvailabilityController.SetAvailability<br/>(POST)"]]
   MOD_Backend_StaffManagement["Backend/StaffManagement"]
   REQ_SetAvailabilityCommand("Set Availability")
-  EP_EmployeeAvailabilityControllerSetAvailability -->|| REQ_SetAvailabilityCommand
+  EP_EmployeeAvailabilityControllerSetAvailability --> REQ_SetAvailabilityCommand
   REQ_SetAvailabilityCommand -->|SetAvailabilityCommandHandler| MOD_Backend_StaffManagement
   REQ_GetContactUserIdQuery[/"Get Contact User Id"/]
   MOD_Backend_StaffManagement -->|SetAvailabilityCommandHandler| REQ_GetContactUserIdQuery

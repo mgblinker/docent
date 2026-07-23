@@ -19,7 +19,7 @@ flowchart TB
   EP_UsersControllerRemoveUser[["UsersController.RemoveUser<br/>(DELETE)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_RemoveUserCommand("Remove User")
-  EP_UsersControllerRemoveUser -->|| REQ_RemoveUserCommand
+  EP_UsersControllerRemoveUser --> REQ_RemoveUserCommand
   REQ_RemoveUserCommand -->|RemoveUserCommandHandler| MOD_ImmoBroker
   EVT_security_role_assignment_requested{{"Security Role Assignment<br/>Requested"}}
   MOD_ImmoBroker -->|RemoveUserCommandHandler| EVT_security_role_assignment_requested

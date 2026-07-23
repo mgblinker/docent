@@ -18,7 +18,7 @@ flowchart TB
   EP_SchemaManagementControllerTriggerSchemaUpdate[["SchemaManagementController.TriggerSchemaUpdate<br/>(POST)"]]
   MOD_TenantProvisioning["TenantProvisioning"]
   REQ_TriggerTenantSchemaUpdateCommand("Trigger Tenant Schema Update")
-  EP_SchemaManagementControllerTriggerSchemaUpdate -->|| REQ_TriggerTenantSchemaUpdateCommand
+  EP_SchemaManagementControllerTriggerSchemaUpdate --> REQ_TriggerTenantSchemaUpdateCommand
   REQ_TriggerTenantSchemaUpdateCommand -->|TriggerTenantSchemaUpdateCommandHandler| MOD_TenantProvisioning
   EVT_tenant_schema_update_initiated{{"tenant.schema.update-initiated"}}
   MOD_TenantProvisioning -->|TriggerTenantSchemaUpdateCommandHandler| EVT_tenant_schema_update_initiated

@@ -19,7 +19,7 @@ flowchart TB
   EP_NotificationsControllerGetNotifications[["NotificationsController.GetNotifications<br/>(GET)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_GetNotificationsQuery[/"Get Notifications"/]
-  EP_NotificationsControllerGetNotifications -->|| REQ_GetNotificationsQuery
+  EP_NotificationsControllerGetNotifications --> REQ_GetNotificationsQuery
   MOD_Backend_Activities["Backend/Activities"]
   REQ_GetNotificationsQuery -->|GetNotificationsQueryHandler| MOD_Backend_Activities
 ```

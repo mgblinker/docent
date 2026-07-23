@@ -1,0 +1,32 @@
+{
+  "projectsRoot": "/Users/michael/Projects",
+  "repoNames": [
+    "Processity.ApiGateway",
+    "Processity.Authentication",
+    "Processity.AutomationService",
+    "Processity.AvatarService",
+    "Processity.Backend",
+    "Processity.BillingService",
+    "Processity.Calendar",
+    "Processity.CommunicationService",
+    "Processity.EventBus",
+    "Processity.FileService",
+    "Processity.ImmoBroker",
+    "Processity.IntegrationService",
+    "Processity.LicensingService",
+    "Processity.LoggingService",
+    "Processity.MappingService",
+    "Processity.OCR",
+    "Processity.PdfService",
+    "Processity.PhoneAuthService",
+    "Processity.Planning",
+    "Processity.ProcessInsightsService",
+    "Processity.RealtimeInteraction",
+    "Processity.SettingsService",
+    "Processity.SharedKernel",
+    "Processity.TenantProvisioning"
+  ],
+  "apiGatewayConfigDir": "Processity.ApiGateway/.docker/local/config",
+  "angularSrcDir": "Processity.WebApp.Angular/src",
+  "monolithRepoName": "Processity.Backend"
+}

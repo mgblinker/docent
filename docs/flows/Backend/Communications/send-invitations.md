@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerSendInvitationsAsync[["MeetingController.SendInvitationsAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_SendInvitationsCommand("Send Invitations")
-  EP_MeetingControllerSendInvitationsAsync -->|| REQ_SendInvitationsCommand
+  EP_MeetingControllerSendInvitationsAsync --> REQ_SendInvitationsCommand
   REQ_SendInvitationsCommand -->|SendInvitationsCommandHandler| MOD_Backend_Communications
   REQ_GetContactUserIdQuery[/"Get Contact User Id"/]
   MOD_Backend_Communications -->|SendInvitationsCommandHandler| REQ_GetContactUserIdQuery

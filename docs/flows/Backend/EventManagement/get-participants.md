@@ -18,7 +18,7 @@ flowchart TB
   EP_ParticipantControllerGetParticipants[["ParticipantController.GetParticipants<br/>(GET)"]]
   MOD_Backend_EventManagement["Backend/EventManagement"]
   REQ_GetParticipantListQuery[/"Get Participant List"/]
-  EP_ParticipantControllerGetParticipants -->|| REQ_GetParticipantListQuery
+  EP_ParticipantControllerGetParticipants --> REQ_GetParticipantListQuery
   REQ_GetParticipantListQuery -->|GetParticipantListQueryHandler| MOD_Backend_EventManagement
   REQ_GetContactListQuery[/"Get Contact List"/]
   MOD_Backend_EventManagement -->|GetParticipantListQueryHandler| REQ_GetContactListQuery

@@ -12,13 +12,15 @@
 
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { buildEventGraph } from "./extract-event-graph.mjs";
 import { buildCommandGraph } from "./extract-command-graph.mjs";
 import { buildGatewayRoutes, resolvePublicUrl } from "./extract-gateway-routes.mjs";
 import { DiagramBuilder } from "./generate-flow-diagram.mjs";
 import { humanizeIdentifier, buildClassHierarchy } from "./lib/cs-scan.mjs";
 
-const OUT_DIR = "/Users/michael/Projects/Processity.Docs/docs/flows";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const OUT_DIR = path.resolve(__dirname, "..", "docs", "flows");
 // Files this script doesn't own and must not delete when clearing old output.
 const PRESERVE = new Set(["frontend-api-inconsistencies.md"]);
 

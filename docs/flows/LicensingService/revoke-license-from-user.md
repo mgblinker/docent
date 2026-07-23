@@ -18,7 +18,7 @@ flowchart TB
   EP_UserLicensesAdminControllerRevokeLicenseFromUser[["UserLicensesAdminController.RevokeLicenseFromUser<br/>(DELETE)"]]
   MOD_LicensingService["LicensingService"]
   REQ_RevokeLicenseFromUserCommand("Revoke License From User")
-  EP_UserLicensesAdminControllerRevokeLicenseFromUser -->|| REQ_RevokeLicenseFromUserCommand
+  EP_UserLicensesAdminControllerRevokeLicenseFromUser --> REQ_RevokeLicenseFromUserCommand
   REQ_RevokeLicenseFromUserCommand -->|RevokeLicenseFromUserCommandHandler| MOD_LicensingService
   EVT_license_revoked_from_user{{"License revoked from user"}}
   MOD_LicensingService -->|RevokeLicenseFromUserCommandHandler| EVT_license_revoked_from_user

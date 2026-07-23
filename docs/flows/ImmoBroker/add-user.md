@@ -19,7 +19,7 @@ flowchart TB
   EP_UsersControllerAddUser[["UsersController.AddUser<br/>(POST)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_AddUserCommand("Add User")
-  EP_UsersControllerAddUser -->|| REQ_AddUserCommand
+  EP_UsersControllerAddUser --> REQ_AddUserCommand
   REQ_AddUserCommand -->|AddUserCommandHandler| MOD_ImmoBroker
   EVT_security_role_assignment_requested{{"Security Role Assignment<br/>Requested"}}
   MOD_ImmoBroker -->|AddUserCommandHandler| EVT_security_role_assignment_requested

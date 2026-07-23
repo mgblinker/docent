@@ -1,0 +1,17 @@
+# Generic local deployment example for Docent. Copy to docker-compose.yml
+# and adjust the port/network to your setup - this is deliberately minimal,
+# no private registry or environment-specific hostnames.
+name: 'docent'
+services:
+  docent:
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile
+    image: docent:latest
+    container_name: docent
+    ports:
+      - "3100:3100"
+    volumes:
+      # Mount your own docs/ and config so they take effect without a rebuild.
+      - ../docs:/app/docs:ro
+      - ../viewer/viewer.config.yaml:/app/viewer.config.yaml:ro

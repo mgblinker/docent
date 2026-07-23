@@ -18,7 +18,7 @@ flowchart TB
   EP_EmployeeAbsencesControllerAddAbsence[["EmployeeAbsencesController.AddAbsence<br/>(POST)"]]
   MOD_Backend_StaffManagement["Backend/StaffManagement"]
   REQ_AddAbsenceCommand("Add Absence")
-  EP_EmployeeAbsencesControllerAddAbsence -->|| REQ_AddAbsenceCommand
+  EP_EmployeeAbsencesControllerAddAbsence --> REQ_AddAbsenceCommand
   REQ_AddAbsenceCommand -->|AddAbsenceCommandHandler| MOD_Backend_StaffManagement
   EVT_absence_created{{"absence.created"}}
   MOD_Backend_StaffManagement -->|AddAbsenceCommandHandler| EVT_absence_created

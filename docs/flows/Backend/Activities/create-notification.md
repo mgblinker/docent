@@ -18,7 +18,7 @@ flowchart TB
   EP_NotificationControllerCreateNotification[["NotificationController.CreateNotification<br/>(POST)"]]
   MOD_Backend_Activities["Backend/Activities"]
   REQ_CreateNotificationCommand("Create Notification")
-  EP_NotificationControllerCreateNotification -->|| REQ_CreateNotificationCommand
+  EP_NotificationControllerCreateNotification --> REQ_CreateNotificationCommand
   REQ_CreateNotificationCommand -->|CreateNotificationCommandHandler| MOD_Backend_Activities
   EVT_notifiable_event_triggered{{"Notifiable Event Triggered"}}
   MOD_Backend_Activities -->|CreateNotificationCommandHandler| EVT_notifiable_event_triggered

@@ -18,7 +18,7 @@ flowchart TB
   EP_SendSetPasswordLinkRequestSendSetPasswordLink[["SendSetPasswordLinkRequest.SendSetPasswordLink<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_SendSetPasswordLinkCommand("Send Set Password Link")
-  EP_SendSetPasswordLinkRequestSendSetPasswordLink -->|| REQ_SendSetPasswordLinkCommand
+  EP_SendSetPasswordLinkRequestSendSetPasswordLink --> REQ_SendSetPasswordLinkCommand
   REQ_SendSetPasswordLinkCommand -->|SendSetPasswordLinkCommandHandler| MOD_Authentication
   EVT_communication_system_email_requested{{"communication.system.email.requested"}}
   MOD_Authentication -->|SendSetPasswordLinkCommandHandler| EVT_communication_system_email_requested

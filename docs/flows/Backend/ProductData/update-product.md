@@ -18,7 +18,7 @@ flowchart TB
   EP_ProductControllerUpdateProduct[["ProductController.UpdateProduct<br/>(PUT)"]]
   MOD_Backend_ProductData["Backend/ProductData"]
   REQ_UpdateProductCommand("Update Product")
-  EP_ProductControllerUpdateProduct -->|| REQ_UpdateProductCommand
+  EP_ProductControllerUpdateProduct --> REQ_UpdateProductCommand
   REQ_UpdateProductCommand -->|UpdateProductCommandHandler| MOD_Backend_ProductData
   EVT_product_catalog_product_updated{{"Product Updated"}}
   MOD_Backend_ProductData -->|UpdateProductCommandHandler| EVT_product_catalog_product_updated

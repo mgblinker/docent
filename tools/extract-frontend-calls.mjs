@@ -16,8 +16,10 @@
 
 import fs from "fs";
 import path from "path";
+import { loadConfig } from "./lib/config.mjs";
 
-const ANGULAR_ROOT = "/Users/michael/Projects/Processity.WebApp.Angular/src";
+const config = loadConfig();
+const ANGULAR_ROOT = path.join(config.projectsRoot, config.angularSrcDir);
 const CLIENTS_DIR = path.join(ANGULAR_ROOT, "shared/services/api/clients");
 
 function walkTsFiles(dir, out) {

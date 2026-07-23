@@ -18,7 +18,7 @@ flowchart TB
   EP_ElearningControllerEnroll[["ElearningController.Enroll<br/>(POST)"]]
   MOD_Backend_Education["Backend/Education"]
   REQ_ElearningEnrollCommand("Elearning Enroll")
-  EP_ElearningControllerEnroll -->|| REQ_ElearningEnrollCommand
+  EP_ElearningControllerEnroll --> REQ_ElearningEnrollCommand
   REQ_ElearningEnrollCommand -->|ElearningEnrollHandler| MOD_Backend_Education
   EVT_education_student_learning_path_enrolled{{"education.student.learning-path.enrolled"}}
   MOD_Backend_Education -->|ElearningEnrollHandler| EVT_education_student_learning_path_enrolled

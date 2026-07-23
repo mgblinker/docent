@@ -18,7 +18,7 @@ flowchart TB
   EP_BootstrapStandaloneTenantControllerBootstrap[["BootstrapStandaloneTenantController.Bootstrap<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_BootstrapStandaloneTenantCommand("Bootstrap Standalone Tenant")
-  EP_BootstrapStandaloneTenantControllerBootstrap -->|| REQ_BootstrapStandaloneTenantCommand
+  EP_BootstrapStandaloneTenantControllerBootstrap --> REQ_BootstrapStandaloneTenantCommand
   REQ_BootstrapStandaloneTenantCommand -->|BootstrapStandaloneTenantCommandHandler| MOD_Authentication
   REQ_RegisterTenantCommand("Register Tenant")
   MOD_Authentication -->|BootstrapStandaloneTenantCommandHandler| REQ_RegisterTenantCommand

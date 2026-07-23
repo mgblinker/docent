@@ -19,7 +19,7 @@ flowchart TB
   EP_NotificationsControllerDeleteNotification[["NotificationsController.DeleteNotification<br/>(DELETE)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_DeleteNotificationCommand("Delete Notification")
-  EP_NotificationsControllerDeleteNotification -->|| REQ_DeleteNotificationCommand
+  EP_NotificationsControllerDeleteNotification --> REQ_DeleteNotificationCommand
   MOD_Backend_Activities["Backend/Activities"]
   REQ_DeleteNotificationCommand -->|DeleteNotificationCommandHandler| MOD_Backend_Activities
 ```

@@ -18,7 +18,7 @@ flowchart TB
   EP_CallControllerCreateCallActivityAsync[["CallController.CreateCallActivityAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_CreateCallActivityCommand("Create Call Activity")
-  EP_CallControllerCreateCallActivityAsync -->|| REQ_CreateCallActivityCommand
+  EP_CallControllerCreateCallActivityAsync --> REQ_CreateCallActivityCommand
   REQ_CreateCallActivityCommand -->|CreateCallActivityCommandHandler| MOD_Backend_Communications
   REQ_GetCurrentUserContactQuery[/"Get Current User Contact"/]
   MOD_Backend_Communications -->|CreateCallActivityCommandHandler| REQ_GetCurrentUserContactQuery

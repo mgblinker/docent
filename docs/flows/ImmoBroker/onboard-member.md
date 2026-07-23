@@ -19,7 +19,7 @@ flowchart TB
   EP_UsersControllerOnboardMember[["UsersController.OnboardMember<br/>(POST)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_OnboardPlanningMemberCommand("Onboard Planning Member")
-  EP_UsersControllerOnboardMember -->|| REQ_OnboardPlanningMemberCommand
+  EP_UsersControllerOnboardMember --> REQ_OnboardPlanningMemberCommand
   REQ_OnboardPlanningMemberCommand -->|OnboardPlanningMemberCommandHandler| MOD_ImmoBroker
   EVT_security_role_assignment_requested{{"Security Role Assignment<br/>Requested"}}
   MOD_ImmoBroker -->|OnboardPlanningMemberCommandHandler| EVT_security_role_assignment_requested

@@ -18,7 +18,7 @@ flowchart TB
   EP_LoginControllerLogin[["LoginController.Login<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_LoginCommand("Login")
-  EP_LoginControllerLogin -->|| REQ_LoginCommand
+  EP_LoginControllerLogin --> REQ_LoginCommand
   REQ_LoginCommand -->|LoginCommandHandler| MOD_Authentication
   EVT_communication_system_email_requested{{"communication.system.email.requested"}}
   MOD_Authentication -->|LoginCommandHandler| EVT_communication_system_email_requested

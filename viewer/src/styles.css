@@ -247,7 +247,8 @@ body {
   transition: grid-template-columns 0.25s ease;
 }
 
-.layout.sidebar-collapsed {
+.layout.sidebar-collapsed,
+.layout.dashboard-hidden {
   grid-template-columns: 0 1fr var(--toc-width);
 }
 
@@ -266,7 +267,8 @@ body {
   transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
-.sidebar.collapsed {
+.sidebar.collapsed,
+.sidebar.dashboard-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

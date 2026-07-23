@@ -18,7 +18,7 @@ flowchart TB
   EP_CalendarItemControllerCreateCalendarItem[["CalendarItemController.CreateCalendarItem<br/>(POST)"]]
   MOD_Calendar["Calendar"]
   REQ_CreateCalendarItemCommand("Create Calendar Item")
-  EP_CalendarItemControllerCreateCalendarItem -->|| REQ_CreateCalendarItemCommand
+  EP_CalendarItemControllerCreateCalendarItem --> REQ_CreateCalendarItemCommand
   REQ_CreateCalendarItemCommand -->|CreateCalendarItemCommandHandler| MOD_Calendar
   EVT_calendar_item_created{{"calendar.item.created"}}
   MOD_Calendar -->|CreateCalendarItemCommandHandler| EVT_calendar_item_created

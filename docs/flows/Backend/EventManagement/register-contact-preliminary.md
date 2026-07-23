@@ -18,7 +18,7 @@ flowchart TB
   EP_RegisterParticipantPreliminaryControllerRegisterContactPreliminary[["RegisterParticipantPreliminaryController.RegisterContactPreliminary<br/>(POST)"]]
   MOD_Backend_EventManagement["Backend/EventManagement"]
   REQ_RegisterParticipantPreliminaryCommand("Register Participant<br/>Preliminary")
-  EP_RegisterParticipantPreliminaryControllerRegisterContactPreliminary -->|| REQ_RegisterParticipantPreliminaryCommand
+  EP_RegisterParticipantPreliminaryControllerRegisterContactPreliminary --> REQ_RegisterParticipantPreliminaryCommand
   REQ_RegisterParticipantPreliminaryCommand -->|RegisterParticipantPreliminaryHandler| MOD_Backend_EventManagement
   EVT_email_send{{"email.send"}}
   MOD_Backend_EventManagement -->|RegisterParticipantPreliminaryHandler| EVT_email_send

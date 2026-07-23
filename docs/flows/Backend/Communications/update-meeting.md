@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerUpdateMeetingAsync[["MeetingController.UpdateMeetingAsync<br/>(PUT)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_UpdateMeetingCommand("Update Meeting")
-  EP_MeetingControllerUpdateMeetingAsync -->|| REQ_UpdateMeetingCommand
+  EP_MeetingControllerUpdateMeetingAsync --> REQ_UpdateMeetingCommand
   REQ_UpdateMeetingCommand -->|UpdateMeetingCommandHandler| MOD_Backend_Communications
   EVT_meeting_updated{{"Meeting Updated"}}
   MOD_Backend_Communications -->|UpdateMeetingCommandHandler| EVT_meeting_updated

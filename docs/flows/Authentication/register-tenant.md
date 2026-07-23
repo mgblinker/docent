@@ -18,7 +18,7 @@ flowchart TB
   EP_RegisterTenantControllerRegisterTenant[["RegisterTenantController.RegisterTenant<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_RegisterTenantCommand("Register Tenant")
-  EP_RegisterTenantControllerRegisterTenant -->|| REQ_RegisterTenantCommand
+  EP_RegisterTenantControllerRegisterTenant --> REQ_RegisterTenantCommand
   REQ_RegisterTenantCommand -->|RegisterTenantCommandHandler| MOD_Authentication
   EVT_authentication_tenant_created{{"authentication.tenant.created"}}
   MOD_Authentication -->|RegisterTenantCommandHandler| EVT_authentication_tenant_created

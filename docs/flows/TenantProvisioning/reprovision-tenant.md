@@ -18,7 +18,7 @@ flowchart TB
   EP_AdminControllerReprovisionTenant[["AdminController.ReprovisionTenant<br/>(POST)"]]
   MOD_TenantProvisioning["TenantProvisioning"]
   REQ_ReprovisionTenantCommand("Reprovision Tenant")
-  EP_AdminControllerReprovisionTenant -->|| REQ_ReprovisionTenantCommand
+  EP_AdminControllerReprovisionTenant --> REQ_ReprovisionTenantCommand
   REQ_ReprovisionTenantCommand -->|ReprovisionTenantCommandHandler| MOD_TenantProvisioning
   EVT_tenant_provisioning_initiated{{"tenant.provisioning.initiated"}}
   MOD_TenantProvisioning -->|ReprovisionTenantCommandHandler| EVT_tenant_provisioning_initiated

@@ -19,7 +19,7 @@ flowchart TB
   EP_ContactsControllerSearch[["ContactsController.Search<br/>(GET)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_SearchContactsQuery[/"Search Contacts"/]
-  EP_ContactsControllerSearch -->|| REQ_SearchContactsQuery
+  EP_ContactsControllerSearch --> REQ_SearchContactsQuery
   MOD_Backend_CoreData["Backend/CoreData"]
   REQ_SearchContactsQuery -->|SearchContactsHandler| MOD_Backend_CoreData
 ```

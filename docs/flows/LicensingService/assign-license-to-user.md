@@ -18,7 +18,7 @@ flowchart TB
   EP_UserLicensesAdminControllerAssignLicenseToUser[["UserLicensesAdminController.AssignLicenseToUser<br/>(POST)"]]
   MOD_LicensingService["LicensingService"]
   REQ_AssignLicenseToUserCommand("Assign License To User")
-  EP_UserLicensesAdminControllerAssignLicenseToUser -->|| REQ_AssignLicenseToUserCommand
+  EP_UserLicensesAdminControllerAssignLicenseToUser --> REQ_AssignLicenseToUserCommand
   REQ_AssignLicenseToUserCommand -->|AssignLicenseToUserCommandHandler| MOD_LicensingService
   EVT_licensing_license_assignedtouser{{"License assigned to user"}}
   MOD_LicensingService -->|AssignLicenseToUserCommandHandler| EVT_licensing_license_assignedtouser

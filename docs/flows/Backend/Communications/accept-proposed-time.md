@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerAcceptProposedTimeAsync[["MeetingController.AcceptProposedTimeAsync<br/>(PUT)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_AcceptProposedTimeCommand("Accept Proposed Time")
-  EP_MeetingControllerAcceptProposedTimeAsync -->|| REQ_AcceptProposedTimeCommand
+  EP_MeetingControllerAcceptProposedTimeAsync --> REQ_AcceptProposedTimeCommand
   REQ_AcceptProposedTimeCommand -->|AcceptProposedTimeCommandHandler| MOD_Backend_Communications
   EVT_meeting_updated{{"Meeting Updated"}}
   MOD_Backend_Communications -->|AcceptProposedTimeCommandHandler| EVT_meeting_updated

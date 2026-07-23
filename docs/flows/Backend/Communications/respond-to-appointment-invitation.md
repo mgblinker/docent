@@ -18,7 +18,7 @@ flowchart TB
   EP_AppointmentControllerRespondToAppointmentInvitationAsync[["AppointmentController.RespondToAppointmentInvitationAsync<br/>(PUT)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_RespondToAppointmentInvitationCommand("Respond To Appointment<br/>Invitation")
-  EP_AppointmentControllerRespondToAppointmentInvitationAsync -->|| REQ_RespondToAppointmentInvitationCommand
+  EP_AppointmentControllerRespondToAppointmentInvitationAsync --> REQ_RespondToAppointmentInvitationCommand
   REQ_RespondToAppointmentInvitationCommand -->|RespondToAppointmentInvitationCommandHandler| MOD_Backend_Communications
   EVT_invitation_response_received{{"Invitation Response Received"}}
   MOD_Backend_Communications -->|RespondToAppointmentInvitationCommandHandler| EVT_invitation_response_received

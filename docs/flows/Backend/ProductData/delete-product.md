@@ -18,7 +18,7 @@ flowchart TB
   EP_ProductControllerDeleteProduct[["ProductController.DeleteProduct<br/>(DELETE)"]]
   MOD_Backend_ProductData["Backend/ProductData"]
   REQ_DeleteProductCommand("Delete Product")
-  EP_ProductControllerDeleteProduct -->|| REQ_DeleteProductCommand
+  EP_ProductControllerDeleteProduct --> REQ_DeleteProductCommand
   REQ_DeleteProductCommand -->|DeleteProductCommandHandler| MOD_Backend_ProductData
   EVT_product_catalog_product_deleted{{"Product Deleted"}}
   MOD_Backend_ProductData -->|DeleteProductCommandHandler| EVT_product_catalog_product_deleted

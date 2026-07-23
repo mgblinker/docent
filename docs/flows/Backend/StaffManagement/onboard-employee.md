@@ -18,7 +18,7 @@ flowchart TB
   EP_InternalOnboardRequestOnboardEmployee[["InternalOnboardRequest.OnboardEmployee<br/>(POST)"]]
   MOD_Backend_StaffManagement["Backend/StaffManagement"]
   REQ_OnboardEmployeeCommand("Onboard Employee")
-  EP_InternalOnboardRequestOnboardEmployee -->|| REQ_OnboardEmployeeCommand
+  EP_InternalOnboardRequestOnboardEmployee --> REQ_OnboardEmployeeCommand
   REQ_OnboardEmployeeCommand -->|OnboardEmployeeCommandHandler| MOD_Backend_StaffManagement
   REQ_GetExtendedContactByIdQuery[/"Get Extended Contact By Id"/]
   MOD_Backend_StaffManagement -->|OnboardEmployeeCommandHandler| REQ_GetExtendedContactByIdQuery

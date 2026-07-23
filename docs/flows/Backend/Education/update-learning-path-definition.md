@@ -18,7 +18,7 @@ flowchart TB
   EP_LearningPathDefinitionControllerUpdateLearningPathDefinition[["LearningPathDefinitionController.UpdateLearningPathDefinition<br/>(PUT)"]]
   MOD_Backend_Education["Backend/Education"]
   REQ_UpdateLearningPathDefinitionCommand("Update Learning Path<br/>Definition")
-  EP_LearningPathDefinitionControllerUpdateLearningPathDefinition -->|| REQ_UpdateLearningPathDefinitionCommand
+  EP_LearningPathDefinitionControllerUpdateLearningPathDefinition --> REQ_UpdateLearningPathDefinitionCommand
   REQ_UpdateLearningPathDefinitionCommand -->|UpdateLearningPathDefinitionCommandHandler| MOD_Backend_Education
   EVT_education_learning_path_definition_updated{{"Learning Path Definition<br/>Updated"}}
   MOD_Backend_Education -->|UpdateLearningPathDefinitionCommandHandler| EVT_education_learning_path_definition_updated

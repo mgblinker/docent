@@ -18,7 +18,7 @@ flowchart TB
   EP_InvitationResponseControllerRespondByTokenAsync[["InvitationResponseController.RespondByTokenAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_RespondToInvitationByTokenCommand("Respond To Invitation By<br/>Token")
-  EP_InvitationResponseControllerRespondByTokenAsync -->|| REQ_RespondToInvitationByTokenCommand
+  EP_InvitationResponseControllerRespondByTokenAsync --> REQ_RespondToInvitationByTokenCommand
   REQ_RespondToInvitationByTokenCommand -->|RespondToInvitationByTokenCommandHandler| MOD_Backend_Communications
   EVT_invitation_response_received{{"Invitation Response Received"}}
   MOD_Backend_Communications -->|RespondToInvitationByTokenCommandHandler| EVT_invitation_response_received

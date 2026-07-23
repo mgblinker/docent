@@ -18,7 +18,7 @@ flowchart TB
   EP_RegisterWithPasskeyControllerRegister[["RegisterWithPasskeyController.Register<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_RegisterWithPasskeyCommand("Register With Passkey")
-  EP_RegisterWithPasskeyControllerRegister -->|| REQ_RegisterWithPasskeyCommand
+  EP_RegisterWithPasskeyControllerRegister --> REQ_RegisterWithPasskeyCommand
   REQ_RegisterWithPasskeyCommand -->|RegisterWithPasskeyCommandHandler| MOD_Authentication
   EVT_user_registered{{"user.registered"}}
   MOD_Authentication -->|RegisterWithPasskeyCommandHandler| EVT_user_registered

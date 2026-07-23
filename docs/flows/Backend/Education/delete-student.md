@@ -18,7 +18,7 @@ flowchart TB
   EP_StudentControllerDeleteStudent[["StudentController.DeleteStudent<br/>(DELETE)"]]
   MOD_Backend_Education["Backend/Education"]
   REQ_DeleteStudentCommand("Delete Student")
-  EP_StudentControllerDeleteStudent -->|| REQ_DeleteStudentCommand
+  EP_StudentControllerDeleteStudent --> REQ_DeleteStudentCommand
   REQ_DeleteStudentCommand -->|DeleteStudentCommandHandler| MOD_Backend_Education
   EVT_education_student_deleted{{"Student Deleted"}}
   MOD_Backend_Education -->|DeleteStudentCommandHandler| EVT_education_student_deleted

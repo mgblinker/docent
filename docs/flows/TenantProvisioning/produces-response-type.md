@@ -18,7 +18,7 @@ flowchart TB
   EP_SchemaManagementControllerProducesResponseType[["SchemaManagementController.ProducesResponseType<br/>(POST)"]]
   MOD_TenantProvisioning["TenantProvisioning"]
   REQ_RegisterServiceCommand("Register Service")
-  EP_SchemaManagementControllerProducesResponseType -->|| REQ_RegisterServiceCommand
+  EP_SchemaManagementControllerProducesResponseType --> REQ_RegisterServiceCommand
   REQ_RegisterServiceCommand -->|RegisterServiceCommandHandler| MOD_TenantProvisioning
   EVT_tenant_schema_update_initiated{{"tenant.schema.update-initiated"}}
   MOD_TenantProvisioning -->|RegisterServiceCommandHandler| EVT_tenant_schema_update_initiated

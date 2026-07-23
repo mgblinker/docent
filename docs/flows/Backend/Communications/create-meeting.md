@@ -18,7 +18,7 @@ flowchart TB
   EP_MeetingControllerCreateMeetingAsync[["MeetingController.CreateMeetingAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_CreateMeetingCommand("Create Meeting")
-  EP_MeetingControllerCreateMeetingAsync -->|| REQ_CreateMeetingCommand
+  EP_MeetingControllerCreateMeetingAsync --> REQ_CreateMeetingCommand
   REQ_CreateMeetingCommand -->|CreateMeetingCommandHandler| MOD_Backend_Communications
   REQ_GetContactUserIdQuery[/"Get Contact User Id"/]
   MOD_Backend_Communications -->|CreateMeetingCommandHandler| REQ_GetContactUserIdQuery

@@ -18,7 +18,7 @@ flowchart TB
   EP_ProductControllerCreateProduct[["ProductController.CreateProduct<br/>(POST)"]]
   MOD_Backend_ProductData["Backend/ProductData"]
   REQ_CreateProductCommand("Create Product")
-  EP_ProductControllerCreateProduct -->|| REQ_CreateProductCommand
+  EP_ProductControllerCreateProduct --> REQ_CreateProductCommand
   REQ_CreateProductCommand -->|CreateProductCommandHandler| MOD_Backend_ProductData
   EVT_product_catalog_product_added{{"Product Added"}}
   MOD_Backend_ProductData -->|CreateProductCommandHandler| EVT_product_catalog_product_added

@@ -18,7 +18,7 @@ flowchart TB
   EP_AppointmentControllerSendAppointmentInvitationAsync[["AppointmentController.SendAppointmentInvitationAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_SendAppointmentInvitationCommand("Send Appointment Invitation")
-  EP_AppointmentControllerSendAppointmentInvitationAsync -->|| REQ_SendAppointmentInvitationCommand
+  EP_AppointmentControllerSendAppointmentInvitationAsync --> REQ_SendAppointmentInvitationCommand
   REQ_SendAppointmentInvitationCommand -->|SendAppointmentInvitationCommandHandler| MOD_Backend_Communications
   REQ_GetContactUserIdQuery[/"Get Contact User Id"/]
   MOD_Backend_Communications -->|SendAppointmentInvitationCommandHandler| REQ_GetContactUserIdQuery

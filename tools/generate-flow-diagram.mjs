@@ -106,7 +106,8 @@ export class DiagramBuilder {
     const key = `${from}->${to}->${label || ""}`;
     if (this.edgesSeen.has(key)) return;
     this.edgesSeen.add(key);
-    this.lines.push(`  ${from} -->|${wrapLabel(label) || ""}| ${to}`);
+    const wrapped = wrapLabel(label);
+    this.lines.push(wrapped ? `  ${from} -->|${wrapped}| ${to}` : `  ${from} --> ${to}`);
     this.edgeList.push({ from, to, label: label || "" });
   }
 

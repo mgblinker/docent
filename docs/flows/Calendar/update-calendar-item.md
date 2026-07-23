@@ -18,7 +18,7 @@ flowchart TB
   EP_CalendarItemControllerUpdateCalendarItem[["CalendarItemController.UpdateCalendarItem<br/>(PUT)"]]
   MOD_Calendar["Calendar"]
   REQ_UpdateCalendarItemCommand("Update Calendar Item")
-  EP_CalendarItemControllerUpdateCalendarItem -->|| REQ_UpdateCalendarItemCommand
+  EP_CalendarItemControllerUpdateCalendarItem --> REQ_UpdateCalendarItemCommand
   REQ_UpdateCalendarItemCommand -->|UpdateCalendarItemCommandHandler| MOD_Calendar
   EVT_calendar_item_completed{{"calendar.item.completed"}}
   MOD_Calendar -->|UpdateCalendarItemCommandHandler| EVT_calendar_item_completed

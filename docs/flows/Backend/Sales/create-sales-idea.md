@@ -18,7 +18,7 @@ flowchart TB
   EP_SalesIdeaControllerCreateSalesIdea[["SalesIdeaController.CreateSalesIdea<br/>(POST)"]]
   MOD_Backend_Sales["Backend/Sales"]
   REQ_CreateSalesIdeaCommand("Create Sales Idea")
-  EP_SalesIdeaControllerCreateSalesIdea -->|| REQ_CreateSalesIdeaCommand
+  EP_SalesIdeaControllerCreateSalesIdea --> REQ_CreateSalesIdeaCommand
   REQ_CreateSalesIdeaCommand -->|CreateSalesIdeaCommandHandler| MOD_Backend_Sales
   REQ_CreateContactCommand("Create Contact")
   MOD_Backend_Sales -->|CreateSalesIdeaCommandHandler| REQ_CreateContactCommand

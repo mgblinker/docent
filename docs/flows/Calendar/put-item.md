@@ -18,12 +18,12 @@ flowchart TB
   EP_CalDavControllerPutItem[["CalDavController.PutItem<br/>(PUT)"]]
   MOD_Calendar["Calendar"]
   REQ_CreateCalendarItemCommand("Create Calendar Item")
-  EP_CalDavControllerPutItem -->|| REQ_CreateCalendarItemCommand
+  EP_CalDavControllerPutItem --> REQ_CreateCalendarItemCommand
   REQ_CreateCalendarItemCommand -->|CreateCalendarItemCommandHandler| MOD_Calendar
   EVT_calendar_item_created{{"calendar.item.created"}}
   MOD_Calendar -->|CreateCalendarItemCommandHandler| EVT_calendar_item_created
   REQ_UpdateCalendarItemCommand("Update Calendar Item")
-  EP_CalDavControllerPutItem -->|| REQ_UpdateCalendarItemCommand
+  EP_CalDavControllerPutItem --> REQ_UpdateCalendarItemCommand
   REQ_UpdateCalendarItemCommand -->|UpdateCalendarItemCommandHandler| MOD_Calendar
   EVT_calendar_item_completed{{"calendar.item.completed"}}
   MOD_Calendar -->|UpdateCalendarItemCommandHandler| EVT_calendar_item_completed

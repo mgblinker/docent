@@ -18,7 +18,7 @@ flowchart TB
   EP_SalesIdeaCandidateControllerGetSalesIdeaCandidates[["SalesIdeaCandidateController.GetSalesIdeaCandidates<br/>(GET)"]]
   MOD_Backend_Sales["Backend/Sales"]
   REQ_GetSalesIdeaCandidatesQuery[/"Get Sales Idea Candidates"/]
-  EP_SalesIdeaCandidateControllerGetSalesIdeaCandidates -->|| REQ_GetSalesIdeaCandidatesQuery
+  EP_SalesIdeaCandidateControllerGetSalesIdeaCandidates --> REQ_GetSalesIdeaCandidatesQuery
   REQ_GetSalesIdeaCandidatesQuery -->|GetSalesIdeaCandidatesQueryHandler| MOD_Backend_Sales
   REQ_GetContactListQuery[/"Get Contact List"/]
   MOD_Backend_Sales -->|GetSalesIdeaCandidatesQueryHandler| REQ_GetContactListQuery

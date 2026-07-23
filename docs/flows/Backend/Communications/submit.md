@@ -18,7 +18,7 @@ flowchart TB
   EP_PublicContactRequestControllerSubmitAsync[["PublicContactRequestController.SubmitAsync<br/>(POST)"]]
   MOD_Backend_Communications["Backend/Communications"]
   REQ_SubmitContactRequestCommand("Submit Contact Request")
-  EP_PublicContactRequestControllerSubmitAsync -->|| REQ_SubmitContactRequestCommand
+  EP_PublicContactRequestControllerSubmitAsync --> REQ_SubmitContactRequestCommand
   REQ_SubmitContactRequestCommand -->|SubmitContactRequestCommandHandler| MOD_Backend_Communications
   EVT_action_required{{"Action Required"}}
   MOD_Backend_Communications -->|SubmitContactRequestCommandHandler| EVT_action_required

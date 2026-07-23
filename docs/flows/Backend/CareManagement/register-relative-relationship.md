@@ -18,7 +18,7 @@ flowchart TB
   EP_RelativesRelationshipControllerRegisterRelativeRelationship[["RelativesRelationshipController.RegisterRelativeRelationship<br/>(POST)"]]
   MOD_Backend_CareManagement["Backend/CareManagement"]
   REQ_RegisterRelativeRelationshipCommand("Register Relative<br/>Relationship")
-  EP_RelativesRelationshipControllerRegisterRelativeRelationship -->|| REQ_RegisterRelativeRelationshipCommand
+  EP_RelativesRelationshipControllerRegisterRelativeRelationship --> REQ_RegisterRelativeRelationshipCommand
   REQ_RegisterRelativeRelationshipCommand -->|RegisterRelativeRelationshipCommandHandler| MOD_Backend_CareManagement
   REQ_GetContactByIdQuery[/"Get Contact By Id"/]
   MOD_Backend_CareManagement -->|RegisterRelativeRelationshipCommandHandler| REQ_GetContactByIdQuery

@@ -18,7 +18,7 @@ flowchart TB
   EP_UploadEventTemplateCertificateControllerUploadEventTemplateCertificate[["UploadEventTemplateCertificateController.UploadEventTemplateCertificate<br/>(POST)"]]
   MOD_Backend_EventManagement["Backend/EventManagement"]
   REQ_UploadEventTemplateCertificateCommand("Upload Event Template<br/>Certificate")
-  EP_UploadEventTemplateCertificateControllerUploadEventTemplateCertificate -->|| REQ_UploadEventTemplateCertificateCommand
+  EP_UploadEventTemplateCertificateControllerUploadEventTemplateCertificate --> REQ_UploadEventTemplateCertificateCommand
   REQ_UploadEventTemplateCertificateCommand -->|UploadEventTemplateCertificateCommandHandler| MOD_Backend_EventManagement
   EVT_event_certificate_uploaded{{"Certificate Uploaded"}}
   MOD_Backend_EventManagement -->|UploadEventTemplateCertificateCommandHandler| EVT_event_certificate_uploaded

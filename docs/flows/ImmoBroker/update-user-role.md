@@ -19,7 +19,7 @@ flowchart TB
   EP_UsersControllerUpdateUserRole[["UsersController.UpdateUserRole<br/>(PUT)"]]
   MOD_ImmoBroker["ImmoBroker"]
   REQ_UpdateUserRoleCommand("Update User Role")
-  EP_UsersControllerUpdateUserRole -->|| REQ_UpdateUserRoleCommand
+  EP_UsersControllerUpdateUserRole --> REQ_UpdateUserRoleCommand
   REQ_UpdateUserRoleCommand -->|UpdateUserRoleCommandHandler| MOD_ImmoBroker
   EVT_security_role_assignment_requested{{"Security Role Assignment<br/>Requested"}}
   MOD_ImmoBroker -->|UpdateUserRoleCommandHandler| EVT_security_role_assignment_requested

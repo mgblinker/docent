@@ -18,7 +18,7 @@ flowchart TB
   EP_ReferrerEmployeeControllerCreateReferrerEmployee[["ReferrerEmployeeController.CreateReferrerEmployee<br/>(POST)"]]
   MOD_Backend_SocialCare["Backend/SocialCare"]
   REQ_CreateReferrerEmployeeCommand("Create Referrer Employee")
-  EP_ReferrerEmployeeControllerCreateReferrerEmployee -->|| REQ_CreateReferrerEmployeeCommand
+  EP_ReferrerEmployeeControllerCreateReferrerEmployee --> REQ_CreateReferrerEmployeeCommand
   REQ_CreateReferrerEmployeeCommand -->|CreateReferrerEmployeeHandler| MOD_Backend_SocialCare
   REQ_GetExtendedContactByIdQuery[/"Get Extended Contact By Id"/]
   MOD_Backend_SocialCare -->|CreateReferrerEmployeeHandler| REQ_GetExtendedContactByIdQuery

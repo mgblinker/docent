@@ -18,7 +18,7 @@ flowchart TB
   EP_CreateFirstAdminControllerCreateFirstAdminAsync[["CreateFirstAdminController.CreateFirstAdminAsync<br/>(POST)"]]
   MOD_Authentication["Authentication"]
   REQ_CreateFirstAdminCommand("Create First Admin")
-  EP_CreateFirstAdminControllerCreateFirstAdminAsync -->|| REQ_CreateFirstAdminCommand
+  EP_CreateFirstAdminControllerCreateFirstAdminAsync --> REQ_CreateFirstAdminCommand
   REQ_CreateFirstAdminCommand -->|CreateFirstAdminCommandHandler| MOD_Authentication
   REQ_RegisterTenantCommand("Register Tenant")
   MOD_Authentication -->|CreateFirstAdminCommandHandler| REQ_RegisterTenantCommand

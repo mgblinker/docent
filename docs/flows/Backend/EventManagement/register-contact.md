@@ -18,7 +18,7 @@ flowchart TB
   EP_RegisterParticipantControllerRegisterContact[["RegisterParticipantController.RegisterContact<br/>(POST)"]]
   MOD_Backend_EventManagement["Backend/EventManagement"]
   REQ_RegisterParticipantCommand("Register Participant")
-  EP_RegisterParticipantControllerRegisterContact -->|| REQ_RegisterParticipantCommand
+  EP_RegisterParticipantControllerRegisterContact --> REQ_RegisterParticipantCommand
   REQ_RegisterParticipantCommand -->|RegisterParticipantCommandHandler| MOD_Backend_EventManagement
   EVT_email_send{{"email.send"}}
   MOD_Backend_EventManagement -->|RegisterParticipantCommandHandler| EVT_email_send

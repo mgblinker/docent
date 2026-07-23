@@ -18,7 +18,7 @@ flowchart TB
   EP_TenantLicensesAdminControllerAssignLicenseToTenant[["TenantLicensesAdminController.AssignLicenseToTenant<br/>(POST)"]]
   MOD_LicensingService["LicensingService"]
   REQ_AssignLicenseToTenantCommand("Assign License To Tenant")
-  EP_TenantLicensesAdminControllerAssignLicenseToTenant -->|| REQ_AssignLicenseToTenantCommand
+  EP_TenantLicensesAdminControllerAssignLicenseToTenant --> REQ_AssignLicenseToTenantCommand
   REQ_AssignLicenseToTenantCommand -->|AssignLicenseToTenantCommandHandler| MOD_LicensingService
   EVT_licensing_tenant_licenses_activated{{"licensing.tenant-licenses.activated"}}
   MOD_LicensingService -->|AssignLicenseToTenantCommandHandler| EVT_licensing_tenant_licenses_activated
