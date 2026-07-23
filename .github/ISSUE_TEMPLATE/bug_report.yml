@@ -1,0 +1,37 @@
+name: Bug report
+description: Something in the viewer or the tools/ generator isn't working right
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - viewer/
+        - tools/ (flow-doc generator)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected, what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: >
+        For viewer bugs: your viewer.config.yaml (redact anything
+        sensitive) and a snippet of the docs/ structure that triggers it.
+        For tools/ bugs: the C#/TypeScript code shape that isn't detected
+        or is misclassified — these scripts work off real syntax
+        patterns, so a snippet matters more than a description.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Node version / OS

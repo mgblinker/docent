@@ -252,7 +252,8 @@ a build artifact, not something to hand-edit or diff-review line by line.
 
 ## Contributing
 
-See `CONTRIBUTING.md`.
+See `CONTRIBUTING.md`. Please also read `CODE_OF_CONDUCT.md`. Found a
+security issue? See `SECURITY.md` instead of opening a public issue.
 
 ## License
 
