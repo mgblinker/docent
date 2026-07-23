@@ -25,9 +25,13 @@
 
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { loadConfig } from "./lib/config.mjs";
 
-const ANGULAR_ROOT = "/Users/michael/Projects/Processity.WebApp.Angular/src";
-const DOC_OUT = "/Users/michael/Projects/Processity.Docs/docs/flows/frontend-api-inconsistencies.md";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const config = loadConfig();
+const ANGULAR_ROOT = path.join(config.projectsRoot, config.angularSrcDir);
+const DOC_OUT = path.resolve(__dirname, "..", "docs", "flows", "frontend-api-inconsistencies.md");
 const MAX_FILES_PER_TYPE_NAME = 2; // names appearing in more are treated as generic NSwag boilerplate
 
 function walkTsFiles(dir, out) {
