@@ -42,6 +42,12 @@ then following a "continues into" link to the next flow page in the chain:
 
 ![Panning a flow diagram and following it into the next flow page](docs-assets/screenshots/flow-diagram.gif)
 
+**Flow overview graph** (`flows/index`) — expanding module boxes to reveal
+their real nodes and connecting edges, then jumping straight to a specific
+flow via search, which highlights its path across the whole graph:
+
+![Expanding modules and jumping to a flow in the overview graph](docs-assets/screenshots/overview-graph.gif)
+
 ## Quick start
 
 ```
