@@ -1,0 +1,7 @@
+{
+  "projectsRoot": "/absolute/path/to/your/projects",
+  "repoNames": ["YourOrg.Backend", "YourOrg.ApiGateway"],
+  "apiGatewayConfigDir": "YourOrg.ApiGateway/.docker/local/config",
+  "angularSrcDir": "YourOrg.WebApp.Angular/src",
+  "monolithRepoName": "YourOrg.Backend"
+}
