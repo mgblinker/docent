@@ -1,0 +1,1425 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.icon {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.nav-link .icon {
+  margin-right: 0;
+}
+
+:root {
+  /* Processity palette */
+  --blue-50: #e6f2ff;
+  --blue-100: #bddcff;
+  --blue-200: #90c6ff;
+  --blue-500: #1f8cff;
+  --blue-600: #0b78f0;
+  --blue-700: #0063d8;
+  --blue-800: #004fb0;
+
+  --gray-50: #f9fafb;
+  --gray-100: #f2f4f7;
+  --gray-200: #e5e8ed;
+  --gray-300: #d1d6dd;
+  --gray-400: #b0b8c4;
+  --gray-500: #8b95a5;
+  --gray-600: #6c7689;
+  --gray-700: #515969;
+  --gray-800: #383e4a;
+  --gray-900: #1f2329;
+
+  --wood-50: #f8f6f3;
+
+  --teal-600: #319795;
+
+  --yellow-200: #ffea84;
+
+  /* Semantic tokens */
+  --sidebar-width: 280px;
+  --toc-width: 220px;
+  --header-height: 56px;
+  --tab-height: 42px;
+
+  --color-bg: #ffffff;
+  --color-surface: var(--gray-50);
+  --color-surface-raised: #ffffff;
+  --color-border: var(--gray-300);
+  --color-border-subtle: var(--gray-200);
+  --color-text: var(--gray-900);
+  --color-text-secondary: var(--gray-700);
+  --color-text-muted: var(--gray-600);
+  --color-text-tertiary: var(--gray-500);
+  --color-primary: var(--blue-600);
+  --color-primary-hover: var(--blue-700);
+  --color-primary-light: var(--blue-50);
+  --color-code-bg: var(--gray-100);
+  --color-accent: var(--teal-600);
+  --color-highlight: var(--yellow-200);
+  --color-overlay: rgba(31, 35, 41, 0.5);
+  --color-shadow: rgba(31, 35, 41, 0.12);
+  --color-focus-ring: rgba(31, 140, 255, 0.28);
+
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+}
+
+:root.dark {
+  --color-bg: #1b140c;
+  --color-surface: #241b12;
+  --color-surface-raised: #2e2318;
+  --color-border: #4a3b26;
+  --color-border-subtle: #3a2c1d;
+  --color-text: #f2e9dc;
+  --color-text-secondary: #c9b8a2;
+  --color-text-muted: #93826c;
+  --color-text-tertiary: #7a6b58;
+  --color-primary: #4da3ff;
+  --color-primary-hover: #7cbcff;
+  --color-primary-light: rgba(77, 163, 255, 0.16);
+  --color-code-bg: #241b12;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-focus-ring: rgba(77, 163, 255, 0.35);
+}
+
+:root.dark .header {
+  background: #120d08;
+}
+
+:root.dark .search-input {
+  background: #120d08;
+  border-color: var(--color-border);
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+body {
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.theme-toggle:hover {
+  opacity: 0.8;
+}
+
+.theme-toggle .icon {
+  margin-right: 0;
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--gray-900);
+  color: #fff;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #fff;
+  padding: 4px 8px;
+  transition: opacity 0.15s;
+}
+
+.sidebar-toggle:hover {
+  opacity: 0.8;
+}
+
+.site-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ============================================================
+   Tab bar
+   ============================================================ */
+.tab-bar {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: var(--tab-height);
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0 20px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border-subtle);
+  z-index: 99;
+  overflow-x: auto;
+}
+
+.tab-bar:empty {
+  display: none;
+}
+
+.tab {
+  padding: 0 16px;
+  border: none;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--toc-width);
+  margin-top: calc(var(--header-height) + var(--tab-height));
+  min-height: calc(100vh - var(--header-height) - var(--tab-height));
+  transition: grid-template-columns 0.25s ease;
+}
+
+.layout.sidebar-collapsed,
+.layout.dashboard-hidden {
+  grid-template-columns: 0 1fr var(--toc-width);
+}
+
+/* ============================================================
+   Sidebar
+   ============================================================ */
+.sidebar {
+  position: sticky;
+  top: calc(var(--header-height) + var(--tab-height));
+  height: calc(100vh - var(--header-height) - var(--tab-height));
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+  padding: 16px 0;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.sidebar.collapsed,
+.sidebar.dashboard-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sidebar-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-content li {
+  margin: 0;
+}
+
+.sidebar-content .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sidebar-content .nav-link .icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.sidebar-content .nav-link.type-architecture .icon { color: var(--blue-600); }
+.sidebar-content .nav-link.type-feature .icon { color: #2f855a; }
+.sidebar-content .nav-link.type-howto .icon { color: #c05621; }
+.sidebar-content .nav-link.type-manual .icon { color: #6b46c1; }
+.sidebar-content .nav-link.type-other .icon { color: var(--gray-500); }
+
+.sidebar-content .nav-link:hover {
+  background: var(--color-primary-light);
+  color: var(--color-text);
+}
+
+.sidebar-content .nav-link.active {
+  border-left-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 500;
+  background: var(--color-primary-light);
+}
+
+.sidebar-content .nav-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+
+.sidebar-content .nav-group-label .nav-group-index-link {
+  flex: 1;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.sidebar-content .nav-group-label .nav-group-index-link:hover {
+  color: var(--color-primary);
+}
+
+.sidebar-content .nav-group-label:hover {
+  background: var(--color-primary-light);
+}
+
+.sidebar-content .nav-group-label .chevron {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.sidebar-content .nav-group-label .chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.sidebar-content .nav-group > ul {
+  padding-left: 12px;
+}
+
+.sidebar-content .nav-group.collapsed > ul {
+  display: none;
+}
+
+.sidebar-content .nav-category {
+  padding: 16px 20px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+}
+
+.sidebar-content .nav-category:first-child {
+  padding-top: 0;
+}
+
+/* ============================================================
+   Content
+   ============================================================ */
+.content {
+  padding: 32px 48px;
+  max-width: 900px;
+  min-width: 0;
+}
+
+/* Doc type chip */
+.doc-type-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.chip-architecture {
+  background: var(--blue-50);
+  color: var(--blue-600);
+}
+
+.chip-feature {
+  background: #ecfbf4;
+  color: #276749;
+}
+
+.chip-howto {
+  background: #fff4e8;
+  color: #9c461b;
+}
+
+.chip-manual {
+  background: #f4f0ff;
+  color: #6b46c1;
+}
+
+.content-inner {
+  max-width: 100%;
+}
+
+/* Welcome page */
+.welcome {
+  padding: 40px 0 20px;
+}
+
+.welcome h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin-bottom: 8px;
+  border: none;
+}
+
+.welcome-subtitle {
+  color: var(--color-text-muted);
+  font-size: 16px;
+  margin-bottom: 32px;
+}
+
+.category-section {
+  margin-bottom: 40px;
+}
+
+.category-heading {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  margin-bottom: 16px;
+  border: none;
+  padding: 0;
+}
+
+.category-subheading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 20px 0 12px;
+  border: none;
+  padding: 0;
+}
+
+.category-subheading:first-of-type {
+  margin-top: 0;
+}
+
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.component-tile {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+
+.content-inner .component-tile:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px var(--color-shadow);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.component-tile-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.component-tile-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+.component-tile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.component-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.badge-architecture { background: var(--blue-50); color: var(--blue-600); }
+.badge-feature { background: #ecfbf4; color: #276749; }
+.badge-howto { background: #fff4e8; color: #9c461b; }
+.badge-manual { background: #f4f0ff; color: #6b46c1; }
+.badge-other { background: var(--gray-100); color: var(--gray-600); }
+
+.loading {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ============================================================
+   Breadcrumbs
+   ============================================================ */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.breadcrumbs a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbs .separator {
+  color: var(--color-border);
+}
+
+/* ============================================================
+   TOC (right sidebar)
+   ============================================================ */
+.toc {
+  position: sticky;
+  top: calc(var(--header-height) + var(--tab-height));
+  height: calc(100vh - var(--header-height) - var(--tab-height));
+  overflow-y: auto;
+  padding: 24px 16px;
+  border-left: 1px solid var(--color-border-subtle);
+  font-size: 13px;
+}
+
+.toc-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  margin-bottom: 12px;
+}
+
+.toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc li {
+  margin: 0;
+}
+
+.toc a {
+  display: block;
+  padding: 3px 0 3px 12px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.toc a:hover,
+.toc a.active {
+  color: var(--color-primary);
+  border-left-color: var(--color-primary);
+}
+
+.toc .toc-h3 {
+  padding-left: 24px;
+}
+
+.toc .toc-h4 {
+  padding-left: 36px;
+}
+
+/* ============================================================
+   Markdown content
+   ============================================================ */
+.content-inner h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+}
+
+.content-inner h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 32px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+}
+
+.content-inner h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 24px 0 8px;
+}
+
+.content-inner h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 20px 0 8px;
+}
+
+.content-inner h5, .content-inner h6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.content-inner p {
+  margin: 0 0 16px;
+}
+
+.content-inner a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.content-inner a:hover {
+  text-decoration: underline;
+  color: var(--color-primary-hover);
+}
+
+.content-inner a.component-tile,
+.content-inner a.component-tile:hover {
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.content-inner ul, .content-inner ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.content-inner li {
+  margin: 4px 0;
+}
+
+.content-inner blockquote {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-radius: 0 4px 4px 0;
+}
+
+.content-inner blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.content-inner code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--color-code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+}
+
+.content-inner pre {
+  margin: 0 0 16px;
+  padding: 16px;
+  background: var(--color-code-bg);
+  border-radius: 6px;
+  border: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+.content-inner pre code {
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  color: inherit;
+}
+
+.content-inner table {
+  width: 100%;
+  margin: 0 0 16px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.content-inner th, .content-inner td {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-subtle);
+  text-align: left;
+}
+
+.content-inner th {
+  background: var(--color-surface);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.content-inner tr:hover td {
+  background: var(--color-surface);
+}
+
+.content-inner img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.content-inner hr {
+  margin: 24px 0;
+  border: none;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* Heading anchors */
+.content-inner .heading-anchor {
+  color: var(--color-border);
+  text-decoration: none;
+  margin-left: 8px;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.content-inner h1:hover .heading-anchor,
+.content-inner h2:hover .heading-anchor,
+.content-inner h3:hover .heading-anchor,
+.content-inner h4:hover .heading-anchor,
+.content-inner h5:hover .heading-anchor,
+.content-inner h6:hover .heading-anchor {
+  opacity: 1;
+}
+
+.content-inner .heading-anchor:hover {
+  color: var(--color-primary);
+}
+
+/* ============================================================
+   Search
+   ============================================================ */
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-input {
+  width: 260px;
+  padding: 7px 12px 7px 34px;
+  border: 1px solid var(--gray-700);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  background: var(--gray-800);
+  color: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search-input::placeholder {
+  color: var(--gray-500);
+}
+
+.search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-500);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.search-shortcut {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--gray-500);
+  border: 1px solid var(--gray-700);
+  border-radius: 3px;
+  padding: 1px 5px;
+  pointer-events: none;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  width: 420px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  z-index: 200;
+  display: none;
+}
+
+.search-results.visible {
+  display: block;
+}
+
+.search-result-item {
+  display: block;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: background 0.1s;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover,
+.search-result-item.selected {
+  background: var(--color-primary-light);
+}
+
+.search-result-title {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.search-result-path {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.search-result-snippet {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.search-result-snippet mark {
+  background: var(--color-highlight);
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+.search-no-results {
+  padding: 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* ============================================================
+   Mermaid diagrams — scale to fit, zoomable
+   ============================================================ */
+/* Guaranteed never to exceed its parent, however wide the diagram inside
+   is - a genuinely wide diagram gets a native horizontal scrollbar (see
+   overflow-x below) rather than relying solely on the custom pan/zoom JS
+   controls, which turned out not to be an obvious enough affordance. */
+.mermaid-zoom-container {
+  position: relative;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 16px;
+  background: var(--color-surface-raised);
+  max-width: 100%;
+}
+
+.mermaid-zoom-container .mermaid {
+  transform-origin: top left;
+}
+
+/* Render at native size instead of shrinking to fit the column - a
+   diagram with real breadth (many parallel branches) becomes an
+   unreadable thumbnail if forced into that width. The container above
+   scrolls horizontally for anything wider than it (native scrollbar,
+   pinch-zoom, or the custom pan/zoom controls all work). */
+.mermaid-zoom-container .mermaid svg {
+  display: block;
+  width: auto;
+  height: auto;
+}
+
+/* Overview graph: plain DOM/SVG module diagram (see
+   viewer/src/components/overview-graph.ts) - a CSS grid of module boxes
+   (guaranteed non-overlapping by the browser's own box model, not a
+   layout algorithm) that expand in place into their real commands/
+   queries/events/endpoints on click, with a hand-measured SVG overlay
+   drawing lines between related modules. */
+.overview-graph-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.overview-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.overview-flow-combo {
+  position: relative;
+  width: 260px;
+}
+
+.overview-flow-combo-input {
+  width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-raised);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  box-sizing: border-box;
+}
+
+.overview-flow-combo-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.overview-flow-combo-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px var(--color-shadow);
+  z-index: 10;
+}
+
+/* Sticky so a long group's own items still show which heading they're
+   under while scrolling the list, plus a background/border to read as a
+   non-interactive section divider rather than just smaller, grayer text
+   sitting in the same list as the clickable items below it. */
+.overview-flow-combo-group-label {
+  position: sticky;
+  top: 0;
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-900);
+  background: var(--gray-100);
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.overview-flow-combo-group:first-child .overview-flow-combo-group-label {
+  border-top: none;
+}
+
+.overview-flow-combo-item {
+  padding: 6px 12px 6px 20px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.overview-flow-combo-item:hover,
+.overview-flow-combo-item.highlighted {
+  background: var(--blue-50);
+  color: var(--color-primary);
+}
+
+.overview-reset-button {
+  padding: 5px 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: 14px;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px var(--color-shadow);
+  transition: background 0.15s;
+}
+
+.overview-reset-button:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Reuses the exact same colors as .overview-module / .overview-child.kind-*
+   below - a swatch here is just a small standalone square painted with
+   that same border/background pair, so the legend can never drift out of
+   sync with what the boxes actually look like. */
+.overview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.overview-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.overview-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1.5px solid var(--gray-400);
+  background: var(--color-surface-raised);
+}
+
+.overview-legend-swatch.swatch-module {
+  border: 2px solid var(--blue-500);
+  background: var(--blue-50);
+  border-radius: 3px;
+}
+
+.overview-legend-swatch.swatch-start {
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  color: #16a34a;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.overview-legend-swatch.swatch-origin {
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  color: var(--gray-400);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.overview-scroll {
+  position: relative;
+  max-height: 900px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-surface-raised);
+  padding: 20px;
+}
+
+/* Above the boxes (z-index), not behind - a line/arrow terminating on a
+   node nested inside an expanded module has to cross that module's own
+   opaque background first; if the boxes render on top, that whole
+   crossing (arrowhead included) is invisible underneath it. pointer-events
+   stays off so clicks still reach the boxes below. */
+.overview-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.overview-edges path {
+  fill: none;
+  stroke: var(--gray-400);
+  stroke-width: 1.5;
+  /* The container has pointer-events:none (so empty space stays
+     click-through to the boxes below) - re-enabling it just on the path's
+     own stroke lets that thin line still catch hover without needing a
+     separate invisible hit-target overlay. */
+  pointer-events: stroke;
+  transition: stroke-width 0.12s ease, opacity 0.12s ease;
+}
+
+.overview-edges marker path {
+  /* context-stroke: the arrowhead always matches whatever path referenced
+     it via marker-end, so a highlighted (primary-colored) edge gets a
+     matching arrowhead automatically instead of needing a second marker
+     definition swapped in by JS. Falls back to the previous fixed gray if
+     unsupported. */
+  fill: var(--gray-400);
+  fill: context-stroke;
+}
+
+.overview-edge-label {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--color-surface-raised);
+  stroke-width: 3px;
+  pointer-events: auto;
+  transition: font-weight 0.12s ease, opacity 0.12s ease, fill 0.12s ease;
+}
+
+/* Hovering a node or edge bolds it plus whatever it directly connects to,
+   and dims everything else - a transient reading aid layered on top of
+   whatever a click already expanded/selected (see overview-graph.ts
+   hoverNode/hoverEdge). Module boxes deliberately never get this treatment,
+   only individual children and the connecting arrows. Only ever applied
+   together with its "on" sibling, never both at once on the same element. */
+.overview-child.hover-highlight {
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--color-primary);
+  z-index: 3;
+  position: relative;
+}
+
+.overview-child.hover-dim {
+  opacity: 0.4;
+}
+
+.overview-edges path.hover-highlight {
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+
+.overview-edges path.hover-dim {
+  opacity: 0.15;
+}
+
+.overview-edge-label.hover-highlight {
+  font-weight: 700;
+  fill: var(--color-primary);
+  font-size: 10px;
+}
+
+.overview-edge-label.hover-dim {
+  opacity: 0.25;
+}
+
+.overview-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* An expanded module's children wrap into a flex row within whatever
+   column width the grid gave it - at the default ~180-250px cell width
+   that's barely one child wide, forcing everything else into a tall,
+   cramped single-file stack with edges crossing the whole column. Letting
+   an expanded module claim three grid tracks gives its children room to
+   actually wrap into a few short rows instead - a busy module can have
+   20-30 children, so two tracks still left it a narrow, cramped column. */
+.overview-module:has(.overview-module-children:not([hidden])) {
+  grid-column: span 3;
+}
+
+.overview-module {
+  border: 2px solid var(--blue-500);
+  border-radius: 8px;
+  background: var(--blue-50);
+  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.overview-module-header {
+  padding: 12px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gray-900);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Overridden below the default `[hidden] { display: none }` so the
+   collapse/expand of a module's children animates (max-height + opacity)
+   instead of appearing/disappearing instantly. Generous gap/padding here
+   is deliberate: a busy expanded module can have 20-30 children, and at
+   tight spacing the curved edges passing between them made the whole
+   thing unreadable - each row needs enough clearance that an edge's label
+   has somewhere to sit besides on top of a box's own text. */
+.overview-module-children {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 12px;
+  padding: 6px 16px 18px;
+  max-height: 4000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+}
+
+.overview-module-children[hidden] {
+  display: flex;
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.overview-child {
+  border: 1.5px solid var(--gray-400);
+  border-radius: 6px;
+  background: var(--color-surface-raised);
+  padding: 7px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Select/deselect fade+scale (see overview-graph.ts hideAnimated/
+   showAnimated) - `hidden` itself can't transition (display:none has no
+   intermediate state), so these classes animate the visible state first
+   and the element only actually leaves layout once that finishes. */
+.overview-module.leaving,
+.overview-child.leaving,
+.overview-module.entering,
+.overview-child.entering {
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+.overview-child.kind-endpoint, .overview-legend-swatch.kind-endpoint { border-color: #16a34a; background: #dcfce7; color: var(--gray-900); }
+.overview-child.kind-command, .overview-legend-swatch.kind-command { border-color: #d97706; background: #fef3c7; color: var(--gray-900); }
+.overview-child.kind-query, .overview-legend-swatch.kind-query { border-color: #ca8a04; background: #fef9c3; color: var(--gray-900); }
+.overview-child.kind-event, .overview-legend-swatch.kind-event { border-color: #7c3aed; background: #ede9fe; color: var(--gray-900); }
+
+.overview-module.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.overview-module.related {
+  border-color: var(--color-primary);
+}
+
+.overview-child.selected {
+  outline: 2px solid var(--color-primary);
+}
+
+.overview-child.related {
+  outline: 2px solid var(--blue-500);
+}
+
+/* Marks the entry point of a selected flow (see overview-graph.ts
+   selectFlow) - a small filled dot before the label, same idea as a UML
+   sequence diagram's start marker. The class lands on the module or child
+   element itself; for a module that means its nested header. */
+.overview-child.overview-flow-start::before,
+.overview-module.overview-flow-start > .overview-module-header::before {
+  content: "●";
+  color: #16a34a;
+  margin-right: 5px;
+  font-size: 10px;
+}
+
+/* Marks a synthetic producer node (see overview-graph.ts selectFlow) - one
+   that only ever has an OUTGOING edge within this flow's own trace, since it
+   stands for "the specific class that produced this event" rather than
+   something dispatched from elsewhere in the chain. A hollow circle (vs. the
+   flow start's filled dot) keeps it visually distinct: both mean "no
+   incoming arrow is expected here", but for a different reason. */
+.overview-child.overview-flow-origin::before,
+.overview-module.overview-flow-origin > .overview-module-header::before {
+  content: "○";
+  color: var(--gray-400);
+  margin-right: 5px;
+  font-size: 10px;
+}
+
+.overview-flow-panel:empty {
+  display: none;
+}
+
+.overview-flow-panel:not(:empty) {
+  margin: -8px 0 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 14px;
+}
+
+.overview-flow-panel-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.overview-flow-panel ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 1100px) {
+  .toc {
+    display: none;
+  }
+  .layout {
+    grid-template-columns: var(--sidebar-width) 1fr;
+  }
+  .layout.sidebar-collapsed {
+    grid-template-columns: 0 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .layout.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: var(--header-height);
+    width: var(--sidebar-width);
+    z-index: 50;
+    opacity: 1;
+    visibility: visible;
+    transition: left 0.25s ease;
+  }
+  .sidebar.open,
+  .sidebar:not(.collapsed) {
+    left: 0;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: var(--header-height);
+    background: var(--color-overlay);
+    z-index: 49;
+  }
+  .sidebar-overlay.visible {
+    display: block;
+  }
+  .content {
+    padding: 24px 20px;
+  }
+  .search-input {
+    width: 180px;
+  }
+  .search-results {
+    width: 300px;
+    right: 0;
+    left: auto;
+  }
+}
+
+/* ============================================================
+   Print
+   ============================================================ */
+@media print {
+  .header, .sidebar, .toc, .sidebar-toggle {
+    display: none !important;
+  }
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .content {
+    padding: 0;
+  }
+}

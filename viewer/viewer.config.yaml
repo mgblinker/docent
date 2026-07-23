@@ -1,0 +1,62 @@
+docsDir: ../docs
+siteTitle: Processity Docs
+exclude:
+  - "javascripts/**"
+  - "Users/**"
+  - "**/node_modules/**"
+
+navExcludeFiles:
+  - index.md
+  - scope.md
+  - backlog.md
+  - IMPROVEMENTS.md
+  - REORGANIZATION.md
+  - "*SUMMARY.md"
+  - "**/src/**/README.md"
+  - "**/src/**/readme.md"
+
+transparentFolders:
+  - .claude
+  - docs
+  - src
+  - test
+  - Documentation
+
+# Document types for tab navigation
+# Each doc gets a type via frontmatter `type:` or auto-inference. Order
+# matters: first pattern match wins, so more specific types are listed
+# before more general ones (flows/architecture before the catch-all-ish
+# howto/feature patterns).
+docTypes:
+  - id: flows
+    label: Flows
+    patterns:
+      - "flows/**"
+  - id: architecture
+    label: Architecture
+    patterns:
+      - "**/architecture.md"
+      - "**/architecture/**"
+      - "**/*architecture*.md"
+      - "**/*migration*.md"
+      - "**/*data-model*.md"
+  - id: manual
+    label: Manuals and HowTos
+    patterns:
+      - "**/*feature*.md"
+      - "**/*guide*.md"
+      - "**/*integration*.md"
+      - "**/*implementation*.md"
+      - "**/*debugging*.md"
+      - "**/*diagnostic*.md"
+      - "**/*conventions*.md"
+      - "**/*quick-reference*.md"
+      - "**/*getting-started*.md"
+      - "**/*test-flow*.md"
+      - "**/*manual*.md"
+      - "**/*user*.md"
+      - "**/*booking*.md"
+      - "**/*usage*.md"
+      - "**/*quick-start*.md"
+      - "**/*tooltip*.md"
+      - "**/*setup*.md"
