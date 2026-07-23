@@ -1,5 +1,5 @@
 docsDir: ../docs
-siteTitle: Docent
+siteTitle: Processity Docs
 exclude:
   - "javascripts/**"
   - "Users/**"
