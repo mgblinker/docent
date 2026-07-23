@@ -37,10 +37,10 @@ the home link folds it away again:
 
 ![Switching tabs filters the sidebar](docs-assets/screenshots/tabs-and-sidebar.gif)
 
-**Navigating into a doc, then a flow page** — sidebar → doc → a flow page
-with a pannable/zoomable mermaid diagram:
+**Flow diagrams** — a generated flow page's mermaid diagram, pan/zoomed,
+then following a "continues into" link to the next flow page in the chain:
 
-![Navigating from the dashboard into a doc and a flow page](docs-assets/screenshots/navigate-and-mermaid.gif)
+![Panning a flow diagram and following it into the next flow page](docs-assets/screenshots/flow-diagram.gif)
 
 ## Quick start
 
