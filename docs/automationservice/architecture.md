@@ -47,9 +47,49 @@ To add a new strategy: implement `IActionStrategy`, register in the action strat
 - Entity/operation discovery: 30-min in-memory (`EntityDiscoveryService`)
 - Gateway mapping aggregation: 5-min sliding (`MappingDiscoveryOrchestrationService`)
 
+## Rule Trigger + Action Parameters (2026)
+
+- `RuleDto` now carries an optional `Trigger` (`AutomationTriggerConfig`), mapped through
+  `RuleDtoToEntitiesMapper` into `Rule.SetTrigger()`. Previously `RuleDto` had no
+  `Trigger` field at all, so any rule created via the CRUD API (`POST /rules/create`)
+  could never be trigger-based — only rules inserted directly into the DB could match
+  record-changed events. Fixed.
+- **Bugfix**: `EvaluateAndExecuteCommandHandler.ExecuteActionsAsync` previously called
+  `action.Strategy.ExecuteAsync(context)` without ever merging `RuleAction.Parameters`
+  into `context.Data`. Every action strategy that reads rule-author-configured static
+  values from `context.Data` (e.g. `PublishModuleEventActionStrategy`'s
+  `TargetModule`/`AssignmentType`/`AssignmentValue`/`FunctionCode`) could never actually
+  receive them — this affected every tenant, for as long as that action strategy has
+  existed. Fixed by merging `action.Parameters` into `context.Data` immediately before
+  each strategy executes, without overwriting trigger-derived keys already present
+  (e.g. `ContactId`, `UserId`).
+
+## Rule Seeding (2026)
+
+New generic, module-agnostic mechanism for a module to ship default rule templates that
+get created automatically when a tenant is provisioned:
+
+`POST /api/v1.0/internal/rules/seed` — internal, service-to-service only (no
+`[Authorize]`, same convention as Authentication's
+`api/v1.0/internal/users/send-setup-link`).
+Body: `{ tenantId, schemaName, rules: RuleDto[] }`.
+Handler: `SeedRulesCommandHandler`
+(`Service/src/AutomationService.Core/Rules/Application/Features/RuleManagement/SeedRules/`)
+— opens a child DI scope, pins `AutomationDbContext` to `schemaName` via
+`SetTenantSchema` (same pattern as `AutomationSchemaUpdateService.CreateDbContext`),
+then calls `IRuleManagementService.CreateRuleAsync` per rule. Rules whose `Name` already
+exists in that schema are skipped — safe to call repeatedly (e.g. on every schema
+update, not just initial provisioning).
+
+Called by `TenantProvisioning`'s `SeedConfigurationDataStep` — see
+`docs/tenantprovisioning/rule-seeding.md`. AutomationService itself has no opinion on
+*what* gets seeded; the seed content is opaque JSON sourced from the module that wants
+rules pre-created (first user: Planning — see `docs/planning/role-assignment-rules.md`).
+
 ## API Routes
 **Rule Engine:**
 `GET/POST /api/rule-engine/v1.0/rules` | `GET/PUT/DELETE /api/rule-engine/v1.0/rules/{id}`
+`POST /api/v1.0/internal/rules/seed` (internal only, see above)
 
 **Workflow Management:**
 `GET/POST /api/workflow-management/v1.0/workflows`
