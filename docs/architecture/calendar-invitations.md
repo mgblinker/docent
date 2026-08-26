@@ -318,6 +318,37 @@ lever to pull before assuming it's a server regression.
   new user could visibly fail until their Contact record exists. (Note this
   is distinct from the `OwnerEmail`/scheduling lookup above, which degrades
   gracefully instead — different feature, different failure philosophy.)
+- **eM Client sends its own duplicate invitation email, outside our
+  control.** When an appointment is created via eM Client's "+New" flow
+  with an attendee already attached (its own invite-confirmation dialog
+  shown and accepted), eM Client sends an invitation email directly from
+  the user's own account, *in addition to* the real one Backend sends via
+  the flow above. Confirmed via prod log capture of the raw ICS bodies
+  (see `Service/src/Calendar.Service/API/CalDav/CalDavController.cs` git
+  history for the temporary diagnostic logging used — since removed) that
+  this is genuinely a second, independent send: exactly one `PutItem` call
+  reaches our server either way, with **no observable difference on the
+  wire** that reliably distinguishes it from the non-duplicating case
+  (adding an attendee to an already-existing appointment, e.g. after
+  drag-and-drop creation):
+  - `SCHEDULE-AGENT=NONE` is present identically in both cases — not a
+    usable signal (and RFC 6638 says `NONE` means *no* automated party
+    should schedule, including us — respecting it fully would drop the
+    legitimate single email in the non-duplicating case too).
+  - `ORGANIZER` differs (matches the CalDAV account owner's own address
+    only in the duplicating case) but this is the *normal, correct* shape
+    for any well-organized meeting from any CalDAV client — suppressing
+    our send on that basis would silently break real invitations for
+    every other client that doesn't double-send.
+  - eM Client's own per-account "use Client for invitation handling"
+    checkbox, when unchecked, did not stop the duplicate in testing —
+    appears to be an eM Client-side bug/limitation (see their [support
+    forum](https://forum.emclient.com/t/calendar-automatically-sends-invitations-to-attendees-when-i-dont-want-it-to/55939)).
+  Documented as a known limitation for users in
+  `docs/calendarservice/caldav-client-setup.md` rather than worked around
+  server-side, since every server-side option considered would have traded
+  this narrow cosmetic duplicate for silently dropping real invitations in
+  the common case.
 
 ## Key files
 

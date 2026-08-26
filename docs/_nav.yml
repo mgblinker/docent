@@ -14,6 +14,7 @@ nav:
       - authentication
       - automationservice
       - billingservice
+      - calendarservice
       - fileservice
       - integrationservice
       - licensingservice

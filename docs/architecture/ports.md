@@ -40,7 +40,7 @@ Host port allocations for local and dev environments. UAT should not expose any 
 | Phone Auth Service | — | 5044 | 80 |
 | Planning | 5063 | 5063 | 8080 |
 | Process Insights Service | — | 5053 | 8080 |
-| Realtime Interaction | — | 5054 | 8080 |
+| Realtime Interaction | 5054 | 5054 | 8080 |
 | Settings Service | 5046 | 5046 | 80 |
 | Tenant Provisioning | 5060 | 5060 | 8080 |
 | Website | 10009 | 10009 | 80 |
@@ -61,13 +61,14 @@ All databases expose 5432 inside the container. Host port = API port + 1000.
 | File Service DB | 6049 | 6049 |
 | Immo Broker DB | 6064 | 6064 |
 | Integration Service DB | 6055 | 6055 |
+| Key Vault DB | — | 6062 |
 | Licensing Service DB | 6059 | 6059 |
 | Logging Service DB | — | 6057 |
 | Mapping Service DB | 6052 | 6052 |
 | Phone Auth Service DB | — | 6044 |
 | Planning DB | 6063 | 6063 |
 | Process Insights Service DB | — | 6053 |
-| Realtime Interaction DB | — | 6054 |
+| Realtime Interaction DB | 6054 | 6054 |
 | Settings Service DB | 6046 | 6046 |
 | Tenant Provisioning DB | 6060 | 6060 |
 | Website DB | 11010 | 11010 |
@@ -76,13 +77,11 @@ All databases expose 5432 inside the container. Host port = API port + 1000.
 
 | Service | Local | Dev | Container |
 |---------|-------|-----|-----------|
-| Booking App | 4203 | — | 4203 |
-| Documents App | 4206 | — | 4200 |
-| ImmoBroker App | 4205 | — | 4200 |
+| Booking App | 4203 | — | 8080 |
+| ImmoBroker App | 4205 | — | 8080 |
 | Relatives App | — | 4201 | 4200 |
-| Planning App | 4204 | — | 4200 |
-| Setup App | 4202 | 4202 | 8080 |
-| Web App | 4200 | 4200 | 4200 |
+| Planning App | 4204 | 4204 | 8080 |
+| Web App | 4200 | 4200 | 8080 |
 | Web App Showcase | — | — | 80 |
 | Test Data Generator | 5210 | 5210 | 8080 |
 

@@ -61,6 +61,32 @@ Last updated: 2026-02-27
    - Return new record ID
 ```
 
+## Recent Fixes
+
+### "Record Created or Updated" trigger missing Contact Requests (2026-08-17)
+
+**Symptom**: `RecordType` entity dropdown on the `RecordCreatedOrUpdated` trigger (`GET /api/v1.0/modules/entities`) didn't list Contact Requests, so workflows couldn't be triggered off contact-form submissions.
+
+**Root cause**: an entity only appears in that dropdown if its owning backend module registers a `BaseReflectionDiscoveryProvider` via `services.RegisterDiscoveryProvider<T>("ModuleName")` (see `Processity.Backend/.claude/CLAUDE.md` → Discovery). The **Communications** module (owner of `ContactRequestEntity`) had never registered one — none of its entities were discoverable, not just Contact Requests.
+
+**Fix required three parts** (registering the provider alone was not enough — the entity still didn't show up until the HTTP route existed on both ends):
+
+1. `Communications/src/Communications/ModelDiscovery/CommunicationsDiscoveryProvider.cs` (same pattern as `CoreDataDiscoveryProvider`) — registers `ContactRequestEntity` as a main object (`Name = "ContactRequest"`, `RouteSegment = "contact-requests"`, `GetById` operation).
+2. `services.RegisterDiscoveryProvider<CommunicationsDiscoveryProvider>("Communications")` in `Communications/src/Communications/Common/DependencyInjection/ServiceCollectionExtensions.cs`.
+3. **`Communications/src/Communications/ModelDiscovery/Controllers/CommunicationsDiscoveryController.cs`** — a concrete `ModuleDiscoveryControllerBase` subclass exposing `GET /api/communications/v1.0/discovery/objects`. Every module needs its own controller (see `CoreDataDiscoveryController`, `SocialCareDiscoveryController`); `DiscoveryRegistry.TryGetProvider("Communications", ...)` is only reachable through this route, no controller existed for Communications before.
+4. **`Processity.ApiGateway/.docker/{dev,local,uat,prod}/config/ocelot.communications.json`** — added a `communications-discovery` route (`SwaggerKey` must end in `-discovery`). `OcelotServiceEndpointProvider` builds the list of services to poll for `GET /api/v1.0/modules/entities` by scanning Ocelot routes for that suffix; Communications had no such route, so the gateway never called the module at all regardless of what was registered backend-side.
+
+**Follow-up**: only `ContactRequest` was registered in the provider. Other Communications entities (Interactions, Templates, Signatures) are still not discoverable — add them to `CommunicationsDiscoveryProvider.ConfigureEntities()` if/when they need to appear as automation trigger/action targets (the provider/controller/route plumbing from this fix already covers them).
+
+## New Activity: Send Email (2026-08-17)
+
+Added `SendEmailActivity` (`AutomationService.Activities/Messaging/Actions/SendEmailActivity.cs`, `Id = "send-email"`, `Category = "Communications"`), plus a new backend send-email endpoint since none existed:
+
+- **Recipient resolution** — `RecipientMode` radio: `"addresses"` (comma/semicolon-separated `EmailAddresses`, may be bound from a previous activity/trigger output) or `"record-lookup"` (`RecordType` + `RecordId` + `EmailField` — fetches the record via the same `IEntityDiscoveryService`/`IModuleServiceUrlResolver`/`IWorkflowModuleClient` GetById path `RecordCreationService` uses, then reads `EmailField` case-insensitively off the response).
+- **Send endpoint** — Communications had no way to send an arbitrary email (only template CRUD + internal SMTP calls from within handlers). Added `POST /api/communications/v1.0/emails/send` (`Messaging/API/Controllers/EmailController.cs` → `SendEmailCommand`/`SendEmailCommandHandler` → existing internal `IMessagingService.SendAsync`, already DI-registered by the Interactions feature). No new Ocelot route needed — it rides the existing generic `/communications/{everything}` proxy (unlike discovery, which needs its own `-discovery` SwaggerKey route, see above).
+- **Config** — added `Services:Communications:BaseUrl` to `Processity.AutomationService/.docker/{dev,local,uat,prod}/appsettings.json` (same host as `CoreData` in each env) — `ModuleServiceUrlResolver` throws if a service's BaseUrl isn't configured, and this key never existed before since AutomationService never called Communications directly.
+- **Not yet built**: HTML/templated bodies (plain text `Subject`/`Body` only), attachments, and using an actual `EmailTemplate` (Communications already has template CRUD but no render/merge mechanism — see `EmailTemplateController` note above).
+
 ## Immediate Next Steps
 
 1. **Verify compilation** — `dotnet build` on SharedKernel, Backend, ApiGateway, AutomationService
