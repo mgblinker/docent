@@ -1,5 +1,6 @@
 ---
 type: architecture
+audience: public
 ---
 
 # FileService Architecture
