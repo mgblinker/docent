@@ -102,17 +102,15 @@ flowchart TB
 
 ## Where your data lives
 
-File contents are stored in an object storage service hosted in
-Switzerland (Infomaniak's Swiss cloud infrastructure), separate from the
-database that holds file and folder names, permissions, and sharing
-settings. Your data is backed up as part of Processity's standard
-operating procedures.
+File contents and metadata (file and folder names, permissions, sharing
+settings) are both stored in Switzerland. Your data is backed up as part
+of Processity's standard operating procedures.
 
 ```mermaid
 flowchart LR
   Storage["Storage service"]
   ObjectStore[("Object storage<br/>🇨🇭 Switzerland")]
-  Database[("Database<br/>names, permissions, sharing")]
+  Database[("Database<br/>🇨🇭 Switzerland<br/>names, permissions, sharing")]
 
   Storage --> ObjectStore
   Storage --> Database
@@ -120,9 +118,9 @@ flowchart LR
 
 ## Licensing & access
 
-Drive is a separate add-on to your Processity subscription. A tenant
-administrator assigns Drive access to individual users, the same way
-other Processity add-ons are assigned — a user without an assigned Drive
-license doesn't get standalone Drive access, though files attached to
-records in other Processity apps (e.g. an attachment on a Planning task)
-still work normally for every user regardless of the Drive add-on.
+Drive is available two ways: as an add-on to an existing Processity
+subscription, or as a standalone product on its own. Either way, a
+tenant administrator assigns Drive access to individual users. A user
+without assigned Drive access doesn't get Drive, though files attached
+to records in other Processity apps (e.g. an attachment on a Planning
+task) still work normally for every user regardless.
