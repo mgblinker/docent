@@ -1,12 +1,23 @@
 import fs from 'fs/promises';
 import path from 'path';
 import fg from 'fast-glob';
+import yaml from 'js-yaml';
 
 export interface SearchDoc {
   id: string;
   title: string;
   body: string;
   path: string;
+  audience: 'public' | 'internal';
+}
+
+// Missing/unrecognized `audience:` frontmatter defaults to "internal" -
+// mirrors scanner.ts's extractFileMeta default.
+function extractAudience(content: string): 'public' | 'internal' {
+  const fmMatch = /^---\n([\s\S]*?)\n---/.exec(content);
+  if (!fmMatch) return 'internal';
+  const fm = yaml.load(fmMatch[1]) as Record<string, unknown>;
+  return fm?.audience === 'public' ? 'public' : 'internal';
 }
 
 function stripMarkdown(content: string): string {
@@ -63,6 +74,7 @@ export async function buildSearchIndex(
         title,
         body: body.slice(0, 5000),
         path: relPath,
+        audience: extractAudience(content),
       });
     } catch {
       // skip unreadable files
