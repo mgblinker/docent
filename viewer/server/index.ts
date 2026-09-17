@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 import { buildNavTree, filterNavTree, type ScanOptions, type DocTypeConfig } from './scanner.js';
 import { buildSearchIndex } from './search-index.js';
+import { buildAssetAudienceIndex, isImagePath } from './assets.js';
 import { createAuthChecker, type AuthConfig } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,7 @@ async function main() {
   console.log('Building search index...');
   let searchDocs = await buildSearchIndex(docsDir, config.exclude);
   let docAudience = new Map(searchDocs.map((d) => [d.path, d.audience]));
+  let assetAudience = await buildAssetAudienceIndex(docsDir, config.exclude);
   console.log(`Indexed ${searchDocs.length} documents.`);
 
   const isAuthenticated = createAuthChecker({
@@ -70,6 +72,7 @@ async function main() {
     navTree = await buildNavTree(docsDir, scanOpts);
     searchDocs = await buildSearchIndex(docsDir, config.exclude);
     docAudience = new Map(searchDocs.map((d) => [d.path, d.audience]));
+    assetAudience = await buildAssetAudienceIndex(docsDir, config.exclude);
     res.json({ ok: true, docs: searchDocs.length });
   });
 
@@ -90,6 +93,33 @@ async function main() {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
       res.type('text/plain').send(content);
+    } catch {
+      res.status(404).json({ error: 'Not found' });
+    }
+  });
+
+  // Images referenced from markdown (e.g. `![](media/screenshot.png)`).
+  // Gated the same way as docs: only servable to anonymous visitors if at
+  // least one audience:public doc actually references this exact path
+  // (see assets.ts) - otherwise a screenshot embedded in an internal doc
+  // would be reachable by anyone who guessed/observed its URL, even though
+  // the doc's own text is gated. Restricted to a fixed image-extension
+  // allowlist so this can't become a generic file-read endpoint.
+  app.get('/api/asset/*assetPath', async (req, res) => {
+    const raw = req.params.assetPath;
+    const assetPath = Array.isArray(raw) ? raw.join('/') : raw;
+    if (!assetPath || assetPath.includes('..') || !isImagePath(assetPath)) {
+      res.status(400).json({ error: 'Invalid path' });
+      return;
+    }
+    if (assetAudience.get(assetPath) !== 'public' && !(await isAuthenticated(req))) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    const filePath = path.join(docsDir, assetPath);
+    try {
+      await fs.access(filePath);
+      res.sendFile(filePath);
     } catch {
       res.status(404).json({ error: 'Not found' });
     }
