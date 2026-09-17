@@ -5,6 +5,9 @@ audience: public
 
 # Processity Drive
 
+Looking to get set up rather than understand the architecture? See the
+[Getting Started & Sync Client Setup guide](./user-manual.md).
+
 ## What it is
 
 Processity Drive is secure file storage and sharing, built into the
