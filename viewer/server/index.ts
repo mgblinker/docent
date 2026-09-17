@@ -47,7 +47,10 @@ async function main() {
   let docAudience = new Map(searchDocs.map((d) => [d.path, d.audience]));
   console.log(`Indexed ${searchDocs.length} documents.`);
 
-  const isAuthenticated = createAuthChecker(config.auth ?? {});
+  const isAuthenticated = createAuthChecker({
+    jwksEndpoint: process.env.AUTH_JWKS_ENDPOINT || config.auth?.jwksEndpoint,
+    cookieName: process.env.AUTH_COOKIE_NAME || config.auth?.cookieName,
+  });
   const docTypes = (config.docTypes ?? []).map(d => ({ id: d.id, label: d.label }));
 
   app.get('/api/config', (_req, res) => {
