@@ -350,6 +350,100 @@ lever to pull before assuming it's a server regression.
   this narrow cosmetic duplicate for silently dropping real invitations in
   the common case.
 
+- **Attendee responses only work via the emailed RSVP link — native
+  client Accept/Decline is deliberately suppressed.** `InvitationIcsService`
+  sets `Attendee.Rsvp = false` (not `true`) on every generated invitation.
+  Per RFC 5545, `RSVP=TRUE` is what makes a mail/calendar client (eM Client,
+  Outlook, Apple Mail) show its own native Accept/Decline prompt on an
+  invite. That native path sends an ICS `METHOD:REPLY` straight to the
+  organizer's own inbox — Processity has no inbound-email processing
+  anywhere (see the `inbox/` stub above), so any response given that way
+  was silently and permanently lost, with no error surfaced to either
+  party. `RSVP=FALSE` suppresses the native prompt so the emailed
+  Accept/Tentative/Decline links — the one path actually wired into
+  `RespondToInvitationByTokenCommandHandler` → `BridgeInvitationResponseToCalendarHandler`
+  → `AttendeeResponseChangedEventHandler` — are the only option offered.
+  Discovered 2026-08-29 debugging a real invitee response that never
+  showed up anywhere; that same investigation also fixed three
+  independent bugs blocking the *link* path itself, all now resolved:
+  - `PublicWebApp:BaseUrl` config key was never set anywhere, so the RSVP
+    link in the invitation email always rendered empty. (Superseded —
+    see the redesign note below: this became `PublicCalendarApp:BaseUrl`
+    pointing at a dedicated app, not the big Angular webapp.)
+  - The anonymous RSVP endpoints had no way to resolve which tenant schema
+    to query (no `[AllowAnonymous]`, and ApiGateway's
+    `AuthHeaderExtractionMiddleware` strips `X-Tenant-Identifier` from
+    external requests by design) — fixed via a new,
+    intentionally-non-trust-boundary `X-Public-Invitation-Tenant` header
+    read by `DirectTenantResolutionStrategy`.
+  - `RespondToInvitationCommandHandler`/`RespondToInvitationByTokenCommandHandler`/
+    `RespondToAppointmentInvitationCommandHandler` published
+    `InvitationResponseReceivedEvent` via bare `PublishAsync`, but both
+    subscribers (organizer notification, and the Calendar PARTSTAT bridge)
+    require the `AuthenticatedEvent<T>` envelope — every response was
+    silently crashing both subscribers. Fixed by switching to
+    `PublishWithAuthAsync`.
+  - Separately (Processity.Calendar): `AttendeeResponseChangedEventHandler`
+    updated `CalendarItemAttendee.PartStat` but never bumped the parent
+    `CalendarItem.UpdatedAt`, which `CalendarService.ComputeETag`/
+    `ComputeCollectionCTag` are keyed on — so even a successful PARTSTAT
+    update never changed the CalDAV ctag/ETag, and the organizer's own
+    CalDAV client (eM Client) never re-fetched the item to show it.
+  Building real inbound REPLY-email processing (IMAP polling, ICS
+  `METHOD:REPLY` parsing, matching back to `Invitation` by UID+attendee
+  email) was considered and deliberately rejected, 2026-08-29: it would
+  mean holding a mailbox credential/token per tenant, plus asking users to
+  configure IMAP access — too much operational and setup burden for what
+  it buys. **`RSVP=FALSE` does not fully solve this either** — confirmed
+  2026-08-29 by decoding a real sent ICS (`RSVP=FALSE` genuinely present)
+  and observing eM Client still show its native Accept/Decline UI anyway.
+  eM Client displays that prompt for any `ATTENDEE` line addressed to the
+  recipient regardless of the RSVP flag — unlike Outlook/Apple Mail, which
+  do respect `RSVP=FALSE` and hide it. Kept `RSVP=FALSE` anyway (reverting
+  to `TRUE` would only remove the suppression that *does* work for
+  compliant clients, with no upside). **Net state, permanent unless IMAP
+  ingestion is revisited**: eM Client's own native buttons always silently
+  swallow the response with no error to either party; the emailed
+  Accept/Tentative/Decline links are the only response path guaranteed to
+  work, for every mail client.
+- **RSVP redesigned to three direct email buttons + a dedicated
+  confirmation-only app, 2026-08-29.** Originally the email had one "Zu-
+  oder absagen" link to a full Angular page (in `Processity.WebApp.Angular`,
+  behind the embedded shell) that itself showed Accept/Decline/Tentative
+  buttons plus a note/propose-new-time form. Replaced because (a) a link
+  to a page-with-buttons requires an extra click past what the invitee's
+  mail client already renders for other invites, and (b) it lived inside
+  the big monorepo webapp for no functional reason. Now:
+  - The invitation email has three separate plain `<a href>` buttons
+    (Accept/Tentative/Decline in `DefaultTemplateSeeder.MeetingInvitationBody`,
+    placeholders `{AcceptLink}`/`{TentativeLink}`/`{DeclineLink}`), each
+    going straight to `{PublicCalendarApp:BaseUrl}/respond/{tenantId}/{token}?status=accepted|tentative|declined`.
+    Built in `InvitationSentNotificationHandler.BuildTemplateValues`.
+  - `PublicCalendarApp:BaseUrl` is `calendar.processity.ch` (`.dev`/
+    `.localdev`/`-uat.ch` per environment) — a small standalone Angular
+    app, `Processity.Calendar/webapp/projects/invitation-response`, with
+    its own `.docker/webapp-invitation-response/{dev,prod}` deploy tier
+    and Gitea workflows, entirely separate from
+    `Processity.WebApp.Angular` and from the `booking` project in this
+    same `webapp/` workspace.
+  - That app has no router, no forms, no interactive buttons of its own.
+    On load it parses `/respond/{tenantId}/{token}` + `?status=`, fires
+    the existing `POST communications-public/v1.0/invitations/respond`
+    once via plain `fetch()` (with the `X-Public-Invitation-Tenant`
+    header), and renders a static "danke für Ihre Antwort" / error
+    message. Nothing else. The note/propose-alternate-time capability the
+    old page had is gone — `RespondToInvitationByTokenCommandHandler`
+    still accepts `ProposedStartTime`/`ProposedEndTime`/`Note` on the API
+    contract, but no client currently sends them.
+  - `api.{env}` is derived client-side from `calendar.{env}` (hostname
+    string substitution) rather than being a build-time config — same
+    app image works unmodified across dev/prod.
+  - Requires `calendar.processity.ch` (etc.) in **both** ApiGateway's own
+    `Cors:AllowedOrigins` (`.docker/{env}/appsettings.json` — this is what
+    actually gates the browser's `fetch()`, since the call lands on
+    `api.processity.ch` i.e. the gateway) **and** Backend's `Cors:AllowedOrigins`
+    for the same reason `PublicWebApp` needed it before.
+
 ## Key files
 
 **Processity.Calendar**
