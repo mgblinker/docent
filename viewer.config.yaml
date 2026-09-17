@@ -1,3 +1,11 @@
+# Optional: gates docs marked `audience: public` in frontmatter (default,
+# for docs with no `audience:` set, is "internal") behind a JWT cookie
+# check. Leave this whole block out to keep every doc visible to everyone
+# (Docent's default behavior).
+# auth:
+#   jwksEndpoint: https://your-auth-service/.well-known/jwks.json
+#   cookieName: your-session-cookie
+
 docsDir: ../docs
 siteTitle: Docent
 exclude:

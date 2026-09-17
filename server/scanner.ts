@@ -10,6 +10,7 @@ export interface NavNode {
   children?: NavNode[];
   category?: string;
   docType?: string;
+  audience?: "public" | "internal";
 }
 
 // "feature"/"howto" are legacy frontmatter values from before those buckets
@@ -128,25 +129,30 @@ function normalizeTitle(title: string): string {
 interface FileMeta {
   title: string | null;
   docType: string | null;
+  audience: "public" | "internal";
 }
 
+// Missing/unrecognized `audience:` frontmatter defaults to "internal" -
+// a doc has to opt in to being public, not opt out of being internal.
 async function extractFileMeta(filePath: string): Promise<FileMeta> {
   try {
     const content = await fs.readFile(filePath, "utf-8");
     let docType: string | null = null;
+    let audience: "public" | "internal" = "internal";
 
     const fmMatch = /^---\n([\s\S]*?)\n---/.exec(content);
     if (fmMatch) {
       const fm = yaml.load(fmMatch[1]) as Record<string, unknown>;
       if (typeof fm?.type === "string") docType = TYPE_ALIASES[fm.type] || fm.type;
+      if (fm?.audience === "public") audience = "public";
     }
 
     const titleMatch = /^#\s+(.+)$/m.exec(content);
     const title = titleMatch ? normalizeTitle(titleMatch[1]) : null;
 
-    return { title, docType };
+    return { title, docType, audience };
   } catch {
-    return { title: null, docType: null };
+    return { title: null, docType: null, audience: "internal" };
   }
 }
 
@@ -241,7 +247,13 @@ async function processFileEntry(
   }
   if (!title) return null;
   const docType = meta.docType || inferDocType(relFile, opts);
-  return { title, path: relFile, file: relFile, ...(docType && { docType }) };
+  return {
+    title,
+    path: relFile,
+    file: relFile,
+    ...(docType && { docType }),
+    audience: meta.audience,
+  };
 }
 
 async function processDirEntry(
@@ -302,7 +314,13 @@ async function processObjectEntry(
       }
       const meta = await extractFileMeta(path.join(dirPath, cleaned));
       const docType = meta.docType || inferDocType(relFile, opts);
-      nodes.push({ title: normalizeTitle(key), path: relFile, file: relFile, ...(docType && { docType }) });
+      nodes.push({
+        title: normalizeTitle(key),
+        path: relFile,
+        file: relFile,
+        ...(docType && { docType }),
+        audience: meta.audience,
+      });
     } else if (Array.isArray(value)) {
       const children = await processNavEntries(
         value,
@@ -479,4 +497,22 @@ export async function buildNavTree(
 ): Promise<NavNode[]> {
   const raw = await scanDir(docsDir, "", opts);
   return collapseChains(raw);
+}
+
+// Drops nodes marked audience:"internal" (frontmatter default) for
+// unauthenticated callers. A folder node survives if it still has at least
+// one visible descendant, even though the folder itself carries no
+// audience of its own.
+export function filterNavTree(nodes: NavNode[], isAuthenticated: boolean): NavNode[] {
+  if (isAuthenticated) return nodes;
+  const result: NavNode[] = [];
+  for (const node of nodes) {
+    if (node.children) {
+      const children = filterNavTree(node.children, isAuthenticated);
+      if (children.length > 0) result.push({ ...node, children });
+      continue;
+    }
+    if (node.audience === "public") result.push(node);
+  }
+  return result;
 }
