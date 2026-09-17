@@ -13,16 +13,21 @@ clients, that keeps a folder on disk in sync with
 [FileService](../fileservice/architecture.md) via its Changes/Manifest
 delta API.
 
-```
-SyncClient.App (shell/UI)
-        ↓
-SyncClient.Core
-  ├─ Auth (PKCE + platform token store)
-  ├─ SyncEngine (SyncCoordinator, FolderSyncWorker, FileServiceApiClient)
-  ├─ FileSystemWatching
-  └─ LocalState
-        ↓
-FileService (/file-storage/*, via ApiGateway) → Changes / Manifest
+```mermaid
+flowchart TB
+  App["SyncClient.App<br/>(shell/UI)"]
+  subgraph Core["SyncClient.Core"]
+    Auth["Auth<br/>(PKCE + platform token store)"]
+    SyncEngine["SyncEngine<br/>(SyncCoordinator, FolderSyncWorker, FileServiceApiClient)"]
+    FSWatch["FileSystemWatching"]
+    LocalState["LocalState"]
+  end
+  ApiGateway["ApiGateway<br/>/file-storage/*"]
+  FileService["FileService<br/>Changes / Manifest"]
+
+  App --> Core
+  Core --> ApiGateway
+  ApiGateway --> FileService
 ```
 
 .NET, split into `SyncClient.Core` (Auth, SyncEngine, FileSystemWatching,

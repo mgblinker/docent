@@ -9,12 +9,19 @@ audience: public
 
 Processity uses **RS256 asymmetric JWT signing**. The authentication service holds the RSA private key and signs tokens. All other services validate tokens locally using the public key fetched from a JWKS endpoint — no network hop to the auth service per request.
 
-```
-User login → Auth Service (signs JWT with RSA private key)
-             ↓
-Cookie sent with each request
-             ↓
-Service (fetches public key from /.well-known/jwks.json, validates locally)
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as Auth Service
+  participant S as Service
+
+  U->>A: Login
+  A-->>U: JWT (signed with RSA private key), HttpOnly cookie
+  U->>S: Request + cookie
+  S->>A: Fetch public key (/.well-known/jwks.json)
+  Note over S: Cached 1 hour
+  S->>S: Validate token locally
+  S-->>U: Response
 ```
 
 ---

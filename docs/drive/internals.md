@@ -11,17 +11,21 @@ Internal engineering detail for the [Drive product overview](./architecture.md)
 
 Two pieces:
 
-```
-Processity.WebApp.Angular (host)
-  src/app/drive/
-    drive-remote.ts              — resolves remoteEntry.json URL per env
-    drive-navigation-section/    — nav entry into the Drive module
-        ↓ Module Federation
-Processity.Drive/webapp (standalone micro-frontend, own deployment)
-    Angular 22, @angular-architects/native-federation, @microsoft/signalr,
-    @processity-apps/web-shared
-        ↓
-FileService (/file-storage/*, via ApiGateway)
+```mermaid
+flowchart TB
+  subgraph Host["Processity.WebApp.Angular (host)"]
+    Remote["drive-remote.ts<br/>resolves remoteEntry.json URL per env"]
+    Nav["drive-navigation-section/<br/>nav entry into the Drive module"]
+  end
+  subgraph Drive["Processity.Drive/webapp (standalone micro-frontend)"]
+    DriveApp["Angular 22, native-federation,\n@microsoft/signalr, @processity-apps/web-shared"]
+  end
+  ApiGateway["ApiGateway<br/>/file-storage/*"]
+  FileService["FileService"]
+
+  Host -->|Module Federation| Drive
+  Drive --> ApiGateway
+  ApiGateway --> FileService
 ```
 
 The standalone `Processity.Drive/webapp` (`projects/drive`) is its own

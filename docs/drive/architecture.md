@@ -40,12 +40,38 @@ computer) show up in the other automatically.
 Office documents can also be opened and edited directly in the browser
 without downloading them first.
 
+```mermaid
+flowchart LR
+  You(["You"])
+  WebApp["Drive web app<br/>(browser)"]
+  SyncClient["Desktop Sync Client<br/>(Windows / macOS)"]
+  Storage["Storage service"]
+
+  You --> WebApp
+  You --> SyncClient
+  WebApp -->|same Processity session| Storage
+  SyncClient -->|same Processity session| Storage
+```
+
 ## Folders & sharing
 
 Every user gets a personal folder for their own files, plus shared
 folders for files a team works on together. Individual files and folders
 can also be shared directly with specific colleagues, with access
 revocable at any time.
+
+```mermaid
+flowchart TB
+  You(["You"])
+  Personal["Personal folder<br/>(only you)"]
+  Shared["Shared folder<br/>(your team)"]
+  Colleague(["Colleague"])
+
+  You --> Personal
+  You --> Shared
+  Colleague --> Shared
+  You -.->|share a file/folder| Colleague
+```
 
 ## Security
 
@@ -81,6 +107,16 @@ Switzerland (Infomaniak's Swiss cloud infrastructure), separate from the
 database that holds file and folder names, permissions, and sharing
 settings. Your data is backed up as part of Processity's standard
 operating procedures.
+
+```mermaid
+flowchart LR
+  Storage["Storage service"]
+  ObjectStore[("Object storage<br/>🇨🇭 Switzerland")]
+  Database[("Database<br/>names, permissions, sharing")]
+
+  Storage --> ObjectStore
+  Storage --> Database
+```
 
 ## Licensing & access
 

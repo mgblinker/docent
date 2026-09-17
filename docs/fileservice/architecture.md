@@ -12,11 +12,22 @@ It always provisions for every tenant — file attachments on module records
 (e.g. a Planning issue, an ImmoBroker listing) work regardless of whether
 the tenant has bought the standalone Drive add-on.
 
-```
-Sync Client ──┐
-              ├─→ ApiGateway (/file-storage/*) → FileService → Postgres (metadata)
-Drive webapp ─┘                                              → SeaweedFS (object bytes, S3 API)
-Other services (Planning, ImmoBroker, ...) ─→ FileLink API ──┘
+```mermaid
+flowchart LR
+  SyncClient["Sync Client"]
+  DriveWebapp["Drive webapp"]
+  OtherServices["Other services<br/>(Planning, ImmoBroker, ...)"]
+  ApiGateway["ApiGateway<br/>/file-storage/*"]
+  FileService["FileService"]
+  Postgres[("Postgres<br/>metadata")]
+  ObjectStore[("Object storage<br/>SeaweedFS, S3 API")]
+
+  SyncClient --> ApiGateway
+  DriveWebapp --> ApiGateway
+  ApiGateway --> FileService
+  OtherServices -->|FileLink API| FileService
+  FileService --> Postgres
+  FileService --> ObjectStore
 ```
 
 Object storage is SeaweedFS running in S3-compatible mode
