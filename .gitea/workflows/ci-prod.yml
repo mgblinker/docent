@@ -1,62 +1,35 @@
 name: CI - Prod
 
+# Manual only - this is the first-ever prod deploy for this service, no
+# auto-trigger yet. Builds fresh from source and pushes to ghcr.io rather
+# than the internal registry (192.168.178.40:10006): prod-server
+# (179.237.104.48) is an external host outside that LAN and can't reach it
+# at all (see docs/cicd/prod-server.md) - only ghcr.io is reachable from
+# there. Uses the shared Processity.CICD pipeline (like every other
+# service's prod deploy) instead of a hand-rolled cross-registry push/pull,
+# since remote_deploy.sh already handles the registry rewrite + local
+# retag dance needed to make `docker compose up` find the ghcr.io image
+# under the name the compose file expects.
 on:
   workflow_dispatch:
 
-env:
-  REGISTRY: 192.168.178.40:10006
-  IMAGE_PREFIX: processity/processity-docs
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to registry
-        run: printf '%s' "${{ secrets.CANDIDATE_TAG_PUSH_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ secrets.CANDIDATE_TAG_PUSH_USER }}" --password-stdin
-
-      - name: Build image
-        run: docker compose -f .docker/prod/docker-compose.yml build
-
-      - name: Push image
-        run: docker compose -f .docker/prod/docker-compose.yml push
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-docs-prod
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.PROD_REMOTE_SSH_PRIVATE_KEY }}
-
-      - name: Configure SSH known_hosts
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
-      - name: Login to registry
-        run: printf '%s' "${{ secrets.CANDIDATE_TAG_PUSH_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ secrets.CANDIDATE_TAG_PUSH_USER }}" --password-stdin
-
-      - name: Create remote Docker context
-        run: |
-          docker context create deploy-remote --docker "host=ssh://${{ vars.PROD_REMOTE_HOST }}"
-          docker context use deploy-remote
-
-      - name: Deploy
-        run: |
-          docker compose -f .docker/prod/docker-compose.yml pull
-          docker compose -f .docker/prod/docker-compose.yml up -d --force-recreate
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker context use default
-          docker logout ${{ env.REGISTRY }} >/dev/null 2>&1 || true
+  docker-deploy:
+    uses: Public/Processity.CICD/.gitea/workflows/shared/docker-pipeline.yml@main
+    with:
+      compose_file: ".docker/prod/docker-compose.yml"
+      platforms: "linux/amd64"
+      remote_host: ${{ vars.PROD_REMOTE_HOST }}
+      slack_channel: ${{ vars.SLACK_CHANNEL }}
+      deploy_on_workflow_dispatch: true
+      registry: ghcr.io
+      registry_namespace: mgblinker
+      registry_insecure: false
+    secrets:
+      REGISTRY_USER: ${{ secrets.GH_USERNAME }}
+      REGISTRY_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      REMOTE_SSH_PRIVATE_KEY: ${{ secrets.PROD_REMOTE_SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      NUGET_PAT: ${{ secrets.NUGET_PAT }}
+      GH_USERNAME: ${{ secrets.GH_USERNAME }}
