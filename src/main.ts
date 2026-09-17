@@ -1,4 +1,4 @@
-import { renderContent, initRenderer, postRender } from "./components/content";
+import { renderContent, initRenderer, postRender, reRenderMermaidForTheme } from "./components/content";
 import { renderSidebar, setActive, filterSidebar } from "./components/sidebar";
 import { renderBreadcrumbs } from "./components/breadcrumb";
 import { initSearch } from "./components/search";
@@ -25,6 +25,7 @@ document.getElementById("theme-toggle")?.addEventListener("click", () => {
   currentTheme = currentTheme === "dark" ? "light" : "dark";
   localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
   applyTheme(currentTheme);
+  reRenderMermaidForTheme();
 });
 
 interface NavNode {
