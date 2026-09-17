@@ -28,5 +28,5 @@ across the Processity platform.
 ## Related components
 
 - [FileService Architecture](../fileservice/architecture.md#licensing) — `"drive"` is a single flat feature gating the standalone Drive apps
-- [Drive Frontend Architecture](../drive/architecture.md#licensing-gap-known-tracked)
+- [Drive Frontend Implementation Notes](../drive/internals.md#licensing-gap-known-tracked)
 - [Tenant Provisioning Architecture](../tenantprovisioning/architecture.md)
