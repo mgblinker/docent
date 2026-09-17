@@ -1,0 +1,20 @@
+name: 'processity-documentation-prod'
+services:
+  processity-documentation:
+    build:
+      context: ../../
+      dockerfile: .docker/Dockerfile
+    image: 192.168.178.40:10006/processity/processity-docs:latest-prod
+    container_name: processity-documentation-prod
+    restart: unless-stopped
+    environment:
+      - AUTH_JWKS_ENDPOINT=http://processity-authentication-service-prod/.well-known/jwks.json
+    ports:
+      - "5070:3100"
+    networks:
+      - processity-network
+
+networks:
+  processity-network:
+    driver: bridge
+    external: true
