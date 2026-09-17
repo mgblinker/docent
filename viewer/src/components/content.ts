@@ -74,6 +74,43 @@ function anchorPlugin(mdInstance: MarkdownIt): void {
   };
 }
 
+// Resolves a markdown image's relative src against the doc that references
+// it (the same way a browser would resolve a relative URL against the
+// current document), then points it at the server's gated asset endpoint
+// instead of the literal relative path - a bare relative src would resolve
+// against the page's actual location (this SPA's hash-routed URL), not the
+// doc's path within docsDir, and silently 404.
+function resolveAssetPath(docPath: string, relSrc: string): string {
+  const baseDir = docPath.split("/").slice(0, -1);
+  const stack = [...baseDir];
+  for (const part of relSrc.split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === "..") stack.pop();
+    else stack.push(part);
+  }
+  return stack.map(encodeURIComponent).join("/");
+}
+
+function isAbsoluteOrData(src: string): boolean {
+  return /^([a-z]+:)?\/\//.test(src) || src.startsWith("data:");
+}
+
+function imagePlugin(mdInstance: MarkdownIt): void {
+  const defaultRender =
+    mdInstance.renderer.rules.image ||
+    ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+
+  mdInstance.renderer.rules.image = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const src = token.attrGet("src") || "";
+    if (!isAbsoluteOrData(src)) {
+      const docPath = (env as { docPath?: string })?.docPath || "";
+      token.attrSet("src", `/api/asset/${resolveAssetPath(docPath, src)}`);
+    }
+    return defaultRender(tokens, idx, options, env, self);
+  };
+}
+
 function mermaidFencePlugin(mdInstance: MarkdownIt): void {
   const defaultFence = mdInstance.renderer.rules.fence;
 
@@ -112,6 +149,7 @@ export async function initRenderer(): Promise<void> {
   });
 
   md.use(anchorPlugin);
+  md.use(imagePlugin);
   md.use(mermaidFencePlugin);
 
   // Load Shiki in the background — pages render immediately without highlighting
@@ -204,7 +242,7 @@ export async function renderContent(
   if (normalizedType && TYPE_LABELS[normalizedType]) {
     html += `<span class="doc-type-chip chip-${normalizedType}">${DOC_TYPE_ICONS[normalizedType] || ""} ${TYPE_LABELS[normalizedType]}</span>`;
   }
-  html += md.render(body);
+  html += md.render(body, { docPath });
   const toc = buildTocHtml(currentToc, docPath);
   return { html, toc };
 }
