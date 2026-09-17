@@ -1,5 +1,6 @@
 ---
 type: howto
+audience: public
 ---
 
 # ImmoBroker — User Manual for Real-Estate Brokers

@@ -1,10 +1,10 @@
-# Optional: gates docs marked `audience: public` in frontmatter (default,
-# for docs with no `audience:` set, is "internal") behind a JWT cookie
-# check. Leave this whole block out to keep every doc visible to everyone
-# (Docent's default behavior).
-# auth:
-#   jwksEndpoint: https://your-auth-service/.well-known/jwks.json
-#   cookieName: your-session-cookie
+# Gates docs marked `audience: public` in frontmatter (default, for docs
+# with no `audience:` set, is "internal") behind the processity-auth JWT
+# cookie. jwksEndpoint differs per environment (local/dev/uat/prod), so it's
+# supplied via the AUTH_JWKS_ENDPOINT env var in each environment's
+# docker-compose.yml rather than hardcoded here.
+auth:
+  cookieName: processity-auth
 
 docsDir: ../docs
 siteTitle: Processity Docs

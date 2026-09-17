@@ -1,6 +1,7 @@
 ---
 title: Planning App — Access & Data Visibility FAQ
 type: manual
+audience: public
 ---
 
 # FAQ: Planning App Access & Data Visibility

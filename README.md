@@ -15,13 +15,23 @@ npm run dev     # http://localhost:5173, proxies API to a local tsx server
 ```
 
 Configuration lives in `viewer/viewer.config.yaml` — this repo's copy sets
-`siteTitle: Processity Docs` (Docent's own default is just "Docent");
-that's the one line expected to permanently differ from upstream on every
-sync, see below.
+`siteTitle: Processity Docs` (Docent's own default is just "Docent") and
+`auth.cookieName: processity-auth`; those are the lines expected to
+permanently differ from upstream on every sync, see below.
 
 The nav tree and search index rebuild from `docs/` every time the server
 starts, including on every container rebuild — nothing needs to be
 regenerated or cached ahead of time for those two.
+
+### Public vs. internal docs
+
+A doc defaults to internal. Add `audience: public` to its frontmatter to
+make it visible to anonymous visitors too — everything else only shows up
+for callers with a valid `processity-auth` cookie. The viewer verifies that
+cookie itself (RS256 JWT, checked against `AUTH_JWKS_ENDPOINT`'s JWKS,
+set per environment in `.docker/{local,uat}/docker-compose.yml`) — no
+separate docs login. Docent's own default (no `auth:` config, no
+`AUTH_JWKS_ENDPOINT`) shows every doc to everyone.
 
 ## Flow-doc generation
 
@@ -48,21 +58,41 @@ regenerated wholesale on the next run (see `tools/generate-docs.mjs`'s
 ## Updating from Docent
 
 `viewer/` and `tools/` are pulled in via `git subtree` from
-[mgblinker/docent](https://github.com/mgblinker/docent) (`main` branch),
-squashed to one commit per sync so this repo's history stays focused on
-Processity-relevant changes:
+[mgblinker/docent](https://github.com/mgblinker/docent), squashed to one
+commit per sync so this repo's history stays focused on Processity-relevant
+changes.
+
+Docent's own repo root is a monorepo (`viewer/`, `tools/`, its own `docs/`,
+etc. all as siblings) — pulling straight from `main` would merge that
+*entire* root into whichever local prefix you target, not just the matching
+subfolder. So each sync goes through an isolated split branch on the
+`docent` side first, in the `docent` checkout:
 
 ```
-git subtree pull --prefix=viewer docent main --squash
-git subtree pull --prefix=tools docent main --squash
+git subtree split --prefix=viewer -b viewer-split
+git push origin viewer-split --force-with-lease
+git subtree split --prefix=tools -b tools-split
+git push origin tools-split --force-with-lease
+```
+
+then here, pull from those branches instead of `main`:
+
+```
+git fetch docent viewer-split tools-split
+git subtree pull --prefix=viewer docent viewer-split --squash
+git subtree pull --prefix=tools docent tools-split --squash
 ```
 
 (First time in a fresh clone: `git remote add docent https://github.com/mgblinker/docent.git`.)
+Before running either pull, make sure the working tree is clean (stash
+anything unrelated) — a subtree pull with local edits in the way, or one
+accidentally run against `main` instead of the split branch, can delete
+unrelated files outside `viewer/`/`tools/` without warning.
 
-After pulling, re-check `viewer/viewer.config.yaml`'s `siteTitle` — an
-upstream change to Docent's own default will silently overwrite it back
-to "Docent" every time, since that line has no merge-conflict marker to
-stop it.
+After pulling, re-check `viewer/viewer.config.yaml`'s `siteTitle` and
+`auth.cookieName` — an upstream change to Docent's own defaults (or a
+removed `auth:` block) will silently overwrite these every time, since
+those lines have no merge-conflict marker to stop it.
 
 **Found a bug in the viewer or the generator itself (not in Processity's
 docs content or config)?** Fix it upstream in `docent`, not here — a fix

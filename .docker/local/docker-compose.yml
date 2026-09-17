@@ -6,6 +6,8 @@ services:
       dockerfile: .docker/Dockerfile
     image: processity-documentation:latest-local
     container_name: processity-documentation-local
+    environment:
+      - AUTH_JWKS_ENDPOINT=http://processity-authentication-service-local/.well-known/jwks.json
     ports:
       - "5070:3100"
     networks:
