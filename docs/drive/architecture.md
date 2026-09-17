@@ -21,7 +21,9 @@ Drive has three parts that work together:
   your browser, from any device.
 - **Desktop Sync Client** ("Processity Drive" app for Windows and macOS) —
   keeps a folder on your computer automatically in sync with your files
-  in Drive, the same way OneDrive or Google Drive desktop apps do.
+  in Drive, the same way OneDrive or Google Drive desktop apps do. Supports
+  more than one Processity account at once, if you work across multiple
+  tenants.
 - **Storage service** — the backend that stores and organizes every file
   and folder, and connects files to the records they belong to elsewhere
   in Processity (e.g. a document attached to a Planning task or an
@@ -37,6 +39,40 @@ computer) show up in the other automatically.
 
 Office documents can also be opened and edited directly in the browser
 without downloading them first.
+
+## Folders & sharing
+
+Every user gets a personal folder for their own files, plus shared
+folders for files a team works on together. Individual files and folders
+can also be shared directly with specific colleagues, with access
+revocable at any time.
+
+## Security
+
+- **Tenant separation** — every customer's data is logically isolated
+  from every other customer's. There is no shared data pool between
+  tenants at any layer.
+- **Encrypted in transit** — every connection, from the browser, the
+  desktop app, and between Processity's own services, uses HTTPS.
+- **One login for everything** — Drive uses the same Processity account
+  you already sign in with elsewhere on the platform, not a separate
+  Drive password. Your session is carried in a browser cookie that
+  JavaScript can never read directly (`HttpOnly`), reducing the impact of
+  a compromised browser tab.
+- **Passkey support** — sign in with a passkey (device-bound, phishing-
+  resistant) instead of a password, where enabled for your account.
+- **Device linking** — the desktop Sync Client is connected to your
+  account through an explicit device-linking step, rather than a
+  password stored on disk, so a lost or stolen laptop doesn't expose your
+  Processity password.
+
+## Versioning
+
+- **File versions** — every time a file changes, Drive keeps prior
+  versions so you can compare or restore an earlier one.
+- **App updates** — the desktop Sync Client updates itself automatically,
+  so you're always running a current, supported version without manual
+  reinstalls.
 
 ## Where your data lives
 
