@@ -185,3 +185,10 @@ Update `rsa-private-key` in Infisical and restart the auth service. All existing
 
 **`alg:none` token rejected**
 → Expected. `RequireSignedTokens = true` in `CookieAuthenticationScheme` blocks unsigned tokens.
+
+---
+
+## Related components
+
+- [FileService Architecture](../fileservice/architecture.md), [Sync Client Architecture](../syncclient/architecture.md), [Drive Frontend Architecture](../drive/architecture.md) — all validate this same `processity-auth` cookie
+- The docs viewer itself (`Processity.Docs/viewer`) validates this cookie the same way (RS256 against this JWKS endpoint) to gate internal-only docs from anonymous visitors — see this repo's own README, "Public vs. internal docs"

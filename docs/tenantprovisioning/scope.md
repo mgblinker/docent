@@ -9,3 +9,6 @@ Last updated: 2026-02-11
 
 ## Recently Completed
 - (recent completions for context)
+
+## Related components
+- [FileService Architecture](../fileservice/architecture.md) — `FileServiceProvisionableModule` is `IsRequired=true`, provisions for every tenant regardless of Drive license

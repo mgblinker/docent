@@ -81,6 +81,11 @@ docker-compose up
 - `LicenseAssignedToUserEvent` - When a license is assigned to a user
 - `LicenseRevokedFromUserEvent` - When a license is revoked from a user
 
+## Related components
+
+- [FileService Architecture](../fileservice/architecture.md#licensing) — `"drive"` is a single flat feature gating the standalone Drive apps
+- [Drive Frontend Architecture](../drive/architecture.md#licensing-gap-known-tracked)
+
 ## License
 
 Proprietary - Processity Platform
