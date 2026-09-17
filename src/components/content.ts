@@ -209,19 +209,40 @@ export async function renderContent(
   return { html, toc };
 }
 
-let mermaidInitialized = false;
+// Mermaid's "default" theme is tuned for light backgrounds - its edge/text
+// colors read as too-dark, low-contrast lines once the page switches to
+// dark mode. Mermaid ships a "dark" theme built for exactly this, so pick
+// between the two based on the app's own dark-mode class rather than
+// hardcoding one.
+function currentMermaidTheme(): "default" | "dark" {
+  return document.documentElement.classList.contains("dark") ? "dark" : "default";
+}
+
+let mermaidInitializedTheme: "default" | "dark" | null = null;
 
 function ensureMermaidInitialized(): void {
-  if (mermaidInitialized) return;
+  const theme = currentMermaidTheme();
+  if (mermaidInitializedTheme === theme) return;
   mermaid.initialize({
     startOnLoad: false,
-    theme: "default",
+    theme,
     securityLevel: "loose",
   });
-  mermaidInitialized = true;
+  mermaidInitializedTheme = theme;
 }
 
 let mermaidRenderCounter = 0;
+
+async function renderMermaidDiv(div: HTMLElement, source: string): Promise<void> {
+  const id = `mermaid-diagram-${mermaidRenderCounter++}`;
+  try {
+    const { svg } = await mermaid.render(id, source);
+    div.innerHTML = svg;
+  } catch (err) {
+    console.error("Mermaid rendering failed:", err);
+    div.innerHTML = `<pre>${source}</pre>`;
+  }
+}
 
 export async function postRender(container: HTMLElement): Promise<void> {
   initOverviewGraph(container);
@@ -234,16 +255,27 @@ export async function postRender(container: HTMLElement): Promise<void> {
   ensureMermaidInitialized();
 
   for (const div of Array.from(mermaidDivs)) {
+    // Stashed before the source text gets replaced by rendered SVG, so a
+    // later theme change (see reRenderMermaidForTheme) can re-render this
+    // same diagram from its original source instead of needing a full
+    // page/content reload.
     const source = div.textContent || "";
-    const id = `mermaid-diagram-${mermaidRenderCounter++}`;
-    try {
-      const { svg } = await mermaid.render(id, source);
-      div.innerHTML = svg;
-    } catch (err) {
-      console.error("Mermaid rendering failed:", err);
-      div.innerHTML = `<pre>${source}</pre>`;
-    }
+    div.dataset.mermaidSource = source;
+    await renderMermaidDiv(div, source);
   }
 
   initMermaidZoom(container);
+}
+
+// Called on theme toggle. Re-initializing mermaid with the new theme only
+// affects diagrams rendered *after* the switch - anything already on the
+// page keeps its old (now wrong-contrast) SVG until re-rendered from the
+// stashed source.
+export async function reRenderMermaidForTheme(): Promise<void> {
+  const divs = document.querySelectorAll<HTMLElement>("[data-mermaid-source]");
+  if (divs.length === 0) return;
+  ensureMermaidInitialized();
+  for (const div of Array.from(divs)) {
+    await renderMermaidDiv(div, div.dataset.mermaidSource || "");
+  }
 }
