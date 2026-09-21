@@ -2,12 +2,17 @@
 // this machine - kept in one JSON file at the repo root (not hardcoded here)
 // so this whole tools/ pipeline is reusable outside Michael's own checkout
 // layout without editing any script.
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CONFIG_PATH = path.resolve(__dirname, "..", "..", "generate-docs.config.json");
+const CONFIG_PATH = path.resolve(
+  __dirname,
+  "..",
+  "..",
+  "generate-docs.config.json",
+);
 
 let cached = null;
 

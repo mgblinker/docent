@@ -3,8 +3,8 @@
 // docs-generation tool, not a compiler; it optimizes for "mostly right,
 // cheap to run across 5000+ files" over full correctness.
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { loadConfig } from "./config.mjs";
 
 const config = loadConfig();
@@ -79,13 +79,13 @@ export function stripComments(content) {
 }
 
 const TYPE_DECL_RE =
-  // Captures an optional generic param list, an optional primary-constructor
-  // parameter list (this codebase's convention, per CLAUDE.md), and an
-  // optional base/interface list after ":" - needed so a subclass calling an
-  // inherited base-class method (e.g. a provisioning handler that publishes
-  // an event only via a shared base class) can still be linked back to that
-  // base class's own producer/consumer edges (see buildClassHierarchy below).
-  /\b(?:public|internal|private)?\s*(?:sealed\s+)?(?:partial\s+)?(?:class|record|interface)\s+([A-Z][A-Za-z0-9_]*)(?:<[^>]*>)?\s*(?:\([^)]*\))?\s*(?::\s*([^{;\n]+))?/g;
+  // Captures type name (m[1]) and optional base/interface list (m[2]) after ":".
+  // Needed so a subclass calling an inherited base-class method can still be
+  // linked back to that base class's own producer/consumer edges (see
+  // buildClassHierarchy below). Generic params and primary-constructor syntax
+  // are not captured (not used downstream), so they're omitted to keep regex
+  // complexity below the 20-unit SonarLint threshold.
+  /\b(?:class|record|interface)\s+([A-Z]\w*)(?::\s*([^{;\n]+))?/g;
 
 // Splits a base/interface list on commas that aren't nested inside a
 // generic's `<...>` (e.g. "ICommandHandler<Foo, Bar>, BaseThing" should
@@ -121,7 +121,7 @@ export function findTypeDeclarations(strippedContent) {
     // class - harmless, since an interface never has its own producer/
     // consumer edges to match against, it just yields no extra hits.
     const baseClasses = splitTopLevelCommas(baseListRaw)
-      .map((t) => /^\s*([A-Z][A-Za-z0-9_]*)/.exec(t)?.[1])
+      .map((t) => /^\s*([A-Z]\w*)/.exec(t)?.[1])
       .filter(Boolean);
     decls.push({ offset: m.index, name: m[1], baseClasses });
   }
@@ -245,7 +245,7 @@ function skipAttributeBlocks(content, pos) {
 export function findFollowingMethod(content, attrEndIdx) {
   const afterAttrs = skipAttributeBlocks(content, attrEndIdx);
   const rest = content.slice(afterAttrs, afterAttrs + 2000);
-  const m = /([A-Za-z_]\w*)\s*\(/.exec(rest);
+  const m = /(?<!\w)([A-Za-z_]\w*)\s*\(/.exec(rest);
   if (!m) return null;
   const methodName = m[1];
   let i = afterAttrs + m.index + m[0].length; // just after the "("
@@ -270,7 +270,11 @@ export function findFollowingMethod(content, attrEndIdx) {
 
 export function methodNameAt(methodSpans, index) {
   for (const span of methodSpans) {
-    if (span.bodyStart !== null && index >= span.bodyStart && index < span.bodyEnd) {
+    if (
+      span.bodyStart !== null &&
+      index >= span.bodyStart &&
+      index < span.bodyEnd
+    ) {
       return span.methodName;
     }
   }

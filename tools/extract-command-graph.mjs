@@ -13,8 +13,8 @@
 //
 // Output: JSON to stdout (or --out <file>): { requests: [...], endpoints: [...] }
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import {
   PROJECTS_ROOT,
   REPO_NAMES,
@@ -29,10 +29,19 @@ import {
   methodNameAt,
 } from "./lib/cs-scan.mjs";
 
-const HTTP_VERBS = ["HttpGet", "HttpPost", "HttpPut", "HttpDelete", "HttpPatch"];
+const HTTP_VERBS = [
+  "HttpGet",
+  "HttpPost",
+  "HttpPut",
+  "HttpDelete",
+  "HttpPatch",
+];
 
 function findVariableAssignedType(content, varName, beforeIndex) {
-  const re = new RegExp(`\\b${varName}\\s*=\\s*new\\s+([A-Za-z][A-Za-z0-9_]*)\\s*\\(`, "g");
+  const re = new RegExp(
+    String.raw`\b${varName}\s*=\s*new\s+([A-Za-z][A-Za-z0-9_]*)\s*\(`,
+    "g",
+  );
   let lastMatch = null;
   let m;
   while ((m = re.exec(content))) {
@@ -42,14 +51,17 @@ function findVariableAssignedType(content, varName, beforeIndex) {
   return lastMatch ? lastMatch[1] : null;
 }
 
-function parseFile(filePath, state) {
-  const content = fs.readFileSync(filePath, "utf-8");
-  const module = moduleFromPath(filePath);
-  const decls = findTypeDeclarations(stripComments(content));
-  const relFile = path.relative(PROJECTS_ROOT, filePath);
+function findClassForAttribute(decls, attrStart) {
+  for (const d of decls) {
+    if (d.offset > attrStart) {
+      return d.name;
+    }
+  }
+  return null;
+}
 
-  // --- IRequestHandler<TRequest, ...> -> handler registrations ---
-  const handlerRe = /IRequestHandler<\s*([A-Za-z][A-Za-z0-9_]*)/g;
+function parseHandlers(content, decls, state, module, relFile) {
+  const handlerRe = /IRequestHandler<\s*([A-Za-z]\w*)/g;
   let m;
   while ((m = handlerRe.exec(content))) {
     const requestType = m[1];
@@ -59,30 +71,30 @@ function parseFile(filePath, state) {
       state.handlers.set(requestType, { handlerClass, module, file: relFile });
     }
   }
+}
 
-  // --- Class-level [Route("...")] just above a controller class ---
+function parseControllerRoutes(content, decls, state) {
   const routeRe = /\[Route\(/g;
+  let m;
   while ((m = routeRe.exec(content))) {
     const argsStart = m.index + m[0].length;
     const args = extractBalancedAttrArgs(content, argsStart);
     const routeMatch = /^\s*"([^"]+)"/.exec(args);
     if (!routeMatch) continue;
-    // the class this decorates is the next type declared after this attribute
-    let className = null;
-    for (const d of decls) {
-      if (d.offset > argsStart) {
-        className = d.name;
-        break;
-      }
-    }
+    const className = findClassForAttribute(decls, argsStart);
     if (className) {
       state.controllerRoutes.set(className, routeMatch[1]);
     }
   }
+}
 
-  // --- [HttpGet]/[HttpPost]/etc action attributes -> endpoints + action spans ---
-  const httpRe = new RegExp(`\\[(${HTTP_VERBS.join("|")})(?:\\(([^)]*)\\))?\\]`, "g");
-  const actionSpans = []; // { methodName, bodyStart, bodyEnd } - for dispatch attribution
+function parseHttpEndpoints(content, decls, state, module, relFile) {
+  const httpRe = new RegExp(
+    String.raw`\[(${HTTP_VERBS.join("|")})(?:\(([^)]*)\))?\]`,
+    "g",
+  );
+  const actionSpans = [];
+  let m;
   while ((m = httpRe.exec(content))) {
     const httpMethod = m[1].replace("Http", "").toUpperCase();
     const segmentMatch = m[2] ? /"([^"]+)"/.exec(m[2]) : null;
@@ -99,28 +111,57 @@ function parseFile(filePath, state) {
       file: relFile,
     });
   }
+  return actionSpans;
+}
 
-  // --- mediator.Send(...) call sites -> dispatch edges ---
-  // Two shapes, matched independently since they can't overlap: the inline
-  // "new X(" form is always followed by "(" (the constructor args), while
-  // the bare-variable form is always followed by "," or ")" (the next
-  // Send() argument or the call's closing paren).
-  const sendInlineRe = /mediator\.Send\(\s*new\s+([A-Za-z][A-Za-z0-9_]*)\s*\(/g;
-  const sendVarRe = /mediator\.Send\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*[,)]/g;
+function parseDispatches(content, decls, actionSpans, state, module, relFile) {
+  const sendInlineRe = /mediator\.Send\(\s*new\s+([A-Za-z]\w*)\s*\(/g;
+  const sendVarRe = /mediator\.Send\(\s*([A-Za-z_]\w*)\s*[,)]/g;
 
   function recordDispatch(index, requestType) {
     const callerClass = enclosingTypeName(decls, index);
     if (!requestType || !callerClass) return;
     const actionMethod = methodNameAt(actionSpans, index);
-    state.dispatches.push({ requestType, module, callerClass, actionMethod, file: relFile });
+    state.dispatches.push({
+      requestType,
+      module,
+      callerClass,
+      actionMethod,
+      file: relFile,
+    });
   }
 
+  let m;
   while ((m = sendInlineRe.exec(content))) {
     recordDispatch(m.index, m[1]);
   }
   while ((m = sendVarRe.exec(content))) {
     recordDispatch(m.index, findVariableAssignedType(content, m[1], m.index));
   }
+}
+
+function parseFile(filePath, state) {
+  const content = fs.readFileSync(filePath, "utf-8");
+  const module = moduleFromPath(filePath);
+  const decls = findTypeDeclarations(stripComments(content));
+  const relFile = path.relative(PROJECTS_ROOT, filePath);
+
+  parseHandlers(content, decls, state, module, relFile);
+  parseControllerRoutes(content, decls, state);
+  const actionSpans = parseHttpEndpoints(
+    content,
+    decls,
+    state,
+    module,
+    relFile,
+  );
+  parseDispatches(content, decls, actionSpans, state, module, relFile);
+}
+
+function classifyRequestKind(requestType) {
+  if (requestType.endsWith("Command")) return "command";
+  if (requestType.endsWith("Query")) return "query";
+  return "unknown";
 }
 
 export function buildCommandGraph() {
@@ -147,11 +188,16 @@ export function buildCommandGraph() {
       const handler = state.handlers.get(requestType) || null;
       const callers = state.dispatches
         .filter((d) => d.requestType === requestType)
-        .map((d) => ({ module: d.module, callerClass: d.callerClass, actionMethod: d.actionMethod, file: d.file }));
+        .map((d) => ({
+          module: d.module,
+          callerClass: d.callerClass,
+          actionMethod: d.actionMethod,
+          file: d.file,
+        }));
       return {
         requestType,
         label: humanizeTypeName(requestType),
-        kind: /Command$/.test(requestType) ? "command" : /Query$/.test(requestType) ? "query" : "unknown",
+        kind: classifyRequestKind(requestType),
         handler,
         callers,
       };
@@ -177,7 +223,9 @@ function main() {
   const outIdx = process.argv.indexOf("--out");
   if (outIdx !== -1 && process.argv[outIdx + 1]) {
     fs.writeFileSync(process.argv[outIdx + 1], output);
-    console.error(`Wrote ${requests.length} requests, ${endpoints.length} endpoints to ${process.argv[outIdx + 1]}`);
+    console.error(
+      `Wrote ${requests.length} requests, ${endpoints.length} endpoints to ${process.argv[outIdx + 1]}`,
+    );
   } else {
     process.stdout.write(output);
   }
@@ -189,5 +237,6 @@ function main() {
   );
 }
 
-const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+const isMain =
+  process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
 if (isMain) main();

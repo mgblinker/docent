@@ -117,7 +117,7 @@ function search(query: string, resultsEl: HTMLElement): void {
   }
 
   resultsEl.innerHTML = hits.map(hit => {
-    const pathDisplay = (hit as any).path.replace(/\.md$/, '').replace(/\//g, ' / ');
+    const pathDisplay = (hit as any).path.replace(/\.md$/, '').replaceAll('/', ' / ');
     return `<a class="search-result-item" href="#" data-path="${(hit as any).path}">
       <div class="search-result-title">${escapeHtml((hit as any).title || 'Untitled')}</div>
       <div class="search-result-path">${escapeHtml(pathDisplay)}</div>

@@ -14,8 +14,8 @@
 //
 // Output: JSON array to stdout (or --out <file>).
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { loadConfig } from "./lib/config.mjs";
 
 const config = loadConfig();
@@ -33,7 +33,8 @@ function walkTsFiles(dir, out) {
     if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walkTsFiles(full, out);
-    else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".spec.ts")) out.push(full);
+    else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".spec.ts"))
+      out.push(full);
   }
 }
 
@@ -56,13 +57,46 @@ function parseClientFile(filePath) {
   const ifaceBody = content.slice(braceStart + 1, i - 1);
 
   const methodNames = new Set();
-  const methodRe = /^\s*(\w+)\(/gm;
+  const methodRe = /^[ \t]*(\w+)\(/gm;
   let m;
   while ((m = methodRe.exec(ifaceBody))) {
     methodNames.add(m[1]);
   }
 
-  return { className, methodNames: [...methodNames], file: path.relative(ANGULAR_ROOT, filePath) };
+  return {
+    className,
+    methodNames: [...methodNames],
+    file: path.relative(ANGULAR_ROOT, filePath),
+  };
+}
+
+function findClientCalls(content, client, relFile) {
+  const calls = [];
+  for (const methodName of client.methodNames) {
+    const callRe = new RegExp(String.raw`\.${methodName}\(`, "g");
+    if (callRe.test(content)) {
+      calls.push({
+        file: relFile,
+        clientClassName: client.className,
+        methodName,
+      });
+    }
+  }
+  return calls;
+}
+
+function detectCalls(nonClientFiles, clients) {
+  const calls = [];
+  for (const file of nonClientFiles) {
+    const content = fs.readFileSync(file, "utf-8");
+    const relFile = path.relative(ANGULAR_ROOT, file);
+
+    for (const client of clients) {
+      if (!content.includes(client.className)) continue;
+      calls.push(...findClientCalls(content, client, relFile));
+    }
+  }
+  return calls;
 }
 
 function main() {
@@ -77,35 +111,27 @@ function main() {
   const allFiles = [];
   walkTsFiles(ANGULAR_ROOT, allFiles);
   const nonClientFiles = allFiles.filter((f) => !f.startsWith(CLIENTS_DIR));
-  console.error(`Scanning ${nonClientFiles.length} non-client .ts files for usage...`);
+  console.error(
+    `Scanning ${nonClientFiles.length} non-client .ts files for usage...`,
+  );
 
-  const calls = [];
-  for (const file of nonClientFiles) {
-    const content = fs.readFileSync(file, "utf-8");
-    const relFile = path.relative(ANGULAR_ROOT, file);
-
-    for (const client of clients) {
-      if (!content.includes(client.className)) continue;
-      for (const methodName of client.methodNames) {
-        const callRe = new RegExp(`\\.${methodName}\\(`, "g");
-        if (callRe.test(content)) {
-          calls.push({ file: relFile, clientClassName: client.className, methodName });
-        }
-      }
-    }
-  }
+  const calls = detectCalls(nonClientFiles, clients);
 
   const output = JSON.stringify(calls, null, 2);
   const outIdx = process.argv.indexOf("--out");
   if (outIdx !== -1 && process.argv[outIdx + 1]) {
     fs.writeFileSync(process.argv[outIdx + 1], output);
-    console.error(`Wrote ${calls.length} call sites to ${process.argv[outIdx + 1]}`);
+    console.error(
+      `Wrote ${calls.length} call sites to ${process.argv[outIdx + 1]}`,
+    );
   } else {
     process.stdout.write(output);
   }
 
   const uniqueFiles = new Set(calls.map((c) => c.file)).size;
-  console.error(`Call sites: ${calls.length} across ${uniqueFiles} frontend files.`);
+  console.error(
+    `Call sites: ${calls.length} across ${uniqueFiles} frontend files.`,
+  );
 }
 
 main();

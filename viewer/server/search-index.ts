@@ -31,9 +31,9 @@ function stripMarkdown(content: string): string {
     // Remove images
     .replace(/!\[.*?\]\(.*?\)/g, '')
     // Remove links but keep text
-    .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')
+    .replace(/\[([^\][]+)\]\([^)]*\)/g, '$1')
     // Remove HTML tags
-    .replace(/<[^>]+>/g, '')
+    .replace(/<[^<>\n]+>/g, '')
     // Remove heading markers
     .replace(/^#{1,6}\s+/gm, '')
     // Remove emphasis
@@ -46,7 +46,7 @@ function stripMarkdown(content: string): string {
 }
 
 function extractTitle(content: string): string {
-  const match = content.match(/^#\s+(.+)$/m);
+  const match = content.match(/^#[ \t]+(\S.*)$/m);
   return match ? match[1].trim() : '';
 }
 

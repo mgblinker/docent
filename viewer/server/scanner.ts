@@ -147,7 +147,7 @@ async function extractFileMeta(filePath: string): Promise<FileMeta> {
       if (fm?.audience === "public") audience = "public";
     }
 
-    const titleMatch = /^#\s+(.+)$/m.exec(content);
+    const titleMatch = /^#[ \t]+(\S.*)$/m.exec(content);
     const title = titleMatch ? normalizeTitle(titleMatch[1]) : null;
 
     return { title, docType, audience };
@@ -390,17 +390,26 @@ function collectReferencedNames(entries: NavEntry[]): Set<string> {
   for (const entry of entries) {
     if (typeof entry === "string") {
       names.add(entry);
-    } else if (typeof entry === "object") {
-      for (const value of Object.values(entry)) {
-        if (typeof value === "string") {
-          names.add(value);
-        } else if (Array.isArray(value)) {
-          for (const n of collectReferencedNames(value)) names.add(n);
-        }
-      }
+    } else {
+      collectFromObject(entry, names);
     }
   }
   return names;
+}
+
+function collectFromObject(
+  obj: Record<string, NavEntry[] | string>,
+  names: Set<string>,
+): void {
+  for (const value of Object.values(obj)) {
+    if (typeof value === "string") {
+      names.add(value);
+    } else {
+      for (const n of collectReferencedNames(value)) {
+        names.add(n);
+      }
+    }
+  }
 }
 
 async function scanDir(

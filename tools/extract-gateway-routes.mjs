@@ -10,8 +10,8 @@
 //
 // Output: JSON array to stdout (or --out <file>).
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { loadConfig } from "./lib/config.mjs";
 
 const config = loadConfig();
@@ -31,12 +31,19 @@ function serviceNameFromHost(host) {
 export function buildGatewayRoutes() {
   const files = fs
     .readdirSync(CONFIG_DIR)
-    .filter((f) => f.startsWith("ocelot.") && f.endsWith(".json") && f !== "ocelot.global.json");
+    .filter(
+      (f) =>
+        f.startsWith("ocelot.") &&
+        f.endsWith(".json") &&
+        f !== "ocelot.global.json",
+    );
 
   const routes = [];
   for (const file of files) {
     const configKey = file.replace(/^ocelot\./, "").replace(/\.json$/, "");
-    const parsed = JSON.parse(fs.readFileSync(path.join(CONFIG_DIR, file), "utf-8"));
+    const parsed = JSON.parse(
+      fs.readFileSync(path.join(CONFIG_DIR, file), "utf-8"),
+    );
     for (const route of parsed.Routes || []) {
       const host = route.DownstreamHostAndPorts?.[0]?.Host;
       routes.push({
@@ -51,7 +58,9 @@ export function buildGatewayRoutes() {
     }
   }
 
-  routes.sort((a, b) => a.upstreamPathTemplate.localeCompare(b.upstreamPathTemplate));
+  routes.sort((a, b) =>
+    a.upstreamPathTemplate.localeCompare(b.upstreamPathTemplate),
+  );
   return routes;
 }
 
@@ -62,14 +71,23 @@ export function buildGatewayRoutes() {
 // modular monolith's modules all share one host and are only distinguished
 // by path prefix, not by DownstreamHostAndPorts.
 export function resolvePublicUrl(routes, downstreamFullPath, httpMethod) {
-  const normalized = downstreamFullPath.startsWith("/") ? downstreamFullPath : "/" + downstreamFullPath;
+  const normalized = downstreamFullPath.startsWith("/")
+    ? downstreamFullPath
+    : "/" + downstreamFullPath;
   let best = null;
   for (const route of routes) {
     if (!route.downstreamPathTemplate.endsWith("{everything}")) continue;
-    if (httpMethod && route.upstreamHttpMethods.length > 0 && !route.upstreamHttpMethods.includes(httpMethod)) {
+    if (
+      httpMethod &&
+      route.upstreamHttpMethods.length > 0 &&
+      !route.upstreamHttpMethods.includes(httpMethod)
+    ) {
       continue;
     }
-    const downstreamPrefix = route.downstreamPathTemplate.slice(0, -"{everything}".length);
+    const downstreamPrefix = route.downstreamPathTemplate.slice(
+      0,
+      -"{everything}".length,
+    );
     if (!normalized.startsWith(downstreamPrefix)) continue;
     // Several routes can match the same path (e.g. authentication's generic
     // "/api/{everything}" catch-all vs calendar's specific "/api/calendar/
@@ -80,7 +98,10 @@ export function resolvePublicUrl(routes, downstreamFullPath, httpMethod) {
     }
   }
   if (!best) return null;
-  const upstreamPrefix = best.route.upstreamPathTemplate.slice(0, -"{everything}".length);
+  const upstreamPrefix = best.route.upstreamPathTemplate.slice(
+    0,
+    -"{everything}".length,
+  );
   return upstreamPrefix + normalized.slice(best.downstreamPrefix.length);
 }
 
@@ -92,17 +113,25 @@ function main() {
   const outIdx = process.argv.indexOf("--out");
   if (outIdx !== -1 && process.argv[outIdx + 1]) {
     fs.writeFileSync(process.argv[outIdx + 1], output);
-    console.error(`Wrote ${routes.length} routes from ${fileCount} config files to ${process.argv[outIdx + 1]}`);
+    console.error(
+      `Wrote ${routes.length} routes from ${fileCount} config files to ${process.argv[outIdx + 1]}`,
+    );
   } else {
     process.stdout.write(output);
   }
 
   const byService = new Map();
   for (const r of routes) {
-    byService.set(r.downstreamService, (byService.get(r.downstreamService) || 0) + 1);
+    byService.set(
+      r.downstreamService,
+      (byService.get(r.downstreamService) || 0) + 1,
+    );
   }
-  console.error(`Routes: ${routes.length} across ${byService.size} downstream services.`);
+  console.error(
+    `Routes: ${routes.length} across ${byService.size} downstream services.`,
+  );
 }
 
-const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+const isMain =
+  process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
 if (isMain) main();

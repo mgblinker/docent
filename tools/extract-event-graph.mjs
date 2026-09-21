@@ -10,8 +10,8 @@
 // Output: JSON graph to stdout (or --out <file>). No rendering yet -
 // this is the "sanity check the extracted data" step.
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import {
   PROJECTS_ROOT,
   REPO_NAMES,
@@ -24,12 +24,7 @@ import {
   extractBalancedAttrArgs,
 } from "./lib/cs-scan.mjs";
 
-function parseFile(filePath, state) {
-  const content = fs.readFileSync(filePath, "utf-8");
-  const module = moduleFromPath(filePath);
-  const decls = findTypeDeclarations(stripComments(content));
-
-  // --- EventCatalog class definitions -> nodes ---
+function parseEventCatalogs(content, decls, state, module, filePath) {
   const catalogRe = /\[EventCatalog\(/g;
   let m;
   while ((m = catalogRe.exec(content))) {
@@ -41,7 +36,6 @@ function parseFile(filePath, state) {
     const categoryMatch = /Category\s*=\s*"([^"]+)"/.exec(args);
 
     const typeName = nextTypeName(decls, argsStart);
-
     const eventNameMatch = /EventName\s*=\s*"([^"]+)"/.exec(content.slice(argsStart));
 
     if (!eventNameMatch || !typeName) continue;
@@ -54,7 +48,7 @@ function parseFile(filePath, state) {
       state.nodes.set(eventName, {
         eventName,
         label: labelMatch ? labelMatch[1] : eventName,
-        description: descMatch ? descMatch[1].replace(/\\"/g, '"') : null,
+        description: descMatch ? descMatch[1].replaceAll(String.raw`\"`, '"') : null,
         category: categoryMatch ? categoryMatch[1] : null,
         className: typeName,
         definedIn: module,
@@ -64,18 +58,11 @@ function parseFile(filePath, state) {
       });
     }
   }
+}
 
-  // --- Plain `public const string EventName = "..."` -> fallback class-name
-  // resolution when a producer/consumer references SomeEvent.EventName but
-  // SomeEvent was never decorated with [EventCatalog(...)] (that attribute
-  // was built for a different feature - the AutomationService workflow-
-  // trigger dropdown - and plenty of integration events predate it or were
-  // never retrofitted). Without this, a ClassName.EventName reference to an
-  // undecorated class silently resolves to nothing and the whole publish/
-  // subscribe edge just vanishes, with no error - exactly what happened to
-  // TenantCreatedEvent (no [EventCatalog], so RegisterTenant's publish and
-  // both of its downstream consumers were all invisible).
+function parseEventNameConstants(content, decls, state, filePath) {
   const constEventNameRe = /public\s+const\s+string\s+EventName\s*=\s*"([^"]+)"/g;
+  let m;
   while ((m = constEventNameRe.exec(content))) {
     const typeName = enclosingTypeName(decls, m.index);
     if (!typeName) continue;
@@ -85,13 +72,19 @@ function parseFile(filePath, state) {
       state.eventNameConstByClassName.set(path.basename(filePath, ".cs"), literalValue);
     }
   }
+}
 
-  // --- CapSubscribe -> consumer edges ---
-  const subRe = /\[CapSubscribe\(\s*(?:"([^"]+)"|([A-Za-z0-9_]+)\.EventName)\s*(?:,\s*Group\s*=\s*"([^"]+)")?\s*\)\]/g;
+function parseCapSubscriptions(content, decls, state, module, filePath) {
+  const subRe = /\[CapSubscribe\(([^)]*)\)\]/g;
+  const nameRe = /^\s*(?:"([^"]+)"|(\w+)\.EventName)/;
+  const groupRe = /,\s*Group\s*=\s*"([^"]+)"\s*$/;
+  let m;
   while ((m = subRe.exec(content))) {
-    const literalName = m[1];
-    const classRef = m[2];
-    const group = m[3] || null;
+    const nameMatch = nameRe.exec(m[1]);
+    if (!nameMatch) continue;
+    const literalName = nameMatch[1];
+    const classRef = nameMatch[2];
+    const group = groupRe.exec(m[1])?.[1] ?? null;
     const handlerClass = enclosingTypeName(decls, m.index) || nextTypeName(decls, m.index);
 
     state.pendingSubscriptions.push({
@@ -103,9 +96,11 @@ function parseFile(filePath, state) {
       file: path.relative(PROJECTS_ROOT, filePath),
     });
   }
+}
 
-  // --- Publish call sites -> producer edges ---
-  const pubRe = /\.(?:PublishWithAuthAsync|PublishAsync)\s*\(\s*(?:"([^"]+)"|([A-Za-z0-9_]+)\.EventName)/g;
+function parsePublishSites(content, decls, state, module, filePath) {
+  const pubRe = /\.(?:PublishWithAuthAsync|PublishAsync)\s*\(\s*(?:"([^"]+)"|(\w+)\.EventName)/g;
+  let m;
   while ((m = pubRe.exec(content))) {
     const literalName = m[1];
     const classRef = m[2];
@@ -118,6 +113,17 @@ function parseFile(filePath, state) {
       file: path.relative(PROJECTS_ROOT, filePath),
     });
   }
+}
+
+function parseFile(filePath, state) {
+  const content = fs.readFileSync(filePath, "utf-8");
+  const module = moduleFromPath(filePath);
+  const decls = findTypeDeclarations(stripComments(content));
+
+  parseEventCatalogs(content, decls, state, module, filePath);
+  parseEventNameConstants(content, decls, state, filePath);
+  parseCapSubscriptions(content, decls, state, module, filePath);
+  parsePublishSites(content, decls, state, module, filePath);
 }
 
 // CAP/RabbitMQ routing-key wildcards, not real event names - a literal "#"

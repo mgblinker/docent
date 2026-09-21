@@ -10,11 +10,11 @@
 //   --kind event|request|controller   what <seed> identifies (default: auto-detect)
 //   --hops N                          max hops to follow (default: 4)
 
-import fs from "fs";
+import fs from "node:fs";
 import { ancestorsOf } from "./lib/cs-scan.mjs";
 
 function sanitizeId(text) {
-  return text.replace(/[^A-Za-z0-9_]/g, "_");
+  return text.replace(/\W/g, "_");
 }
 
 function wrapLabel(text, maxLen = 28) {
@@ -268,24 +268,24 @@ export class DiagramBuilder {
   }
 }
 
-function main() {
-  const [, , eventsPath, commandsPath, seed, ...rest] = process.argv;
-  if (!eventsPath || !commandsPath || !seed) {
-    console.error(
-      "Usage: node generate-flow-diagram.mjs <events.json> <commands.json> <seed> [--kind event|request|controller] [--hops N]",
-    );
-    process.exit(1);
-  }
+function parseArguments(argv) {
+  const [, , eventsPath, commandsPath, seed, ...rest] = argv;
   const hopsIdx = rest.indexOf("--hops");
   const maxHops = hopsIdx !== -1 ? Number.parseInt(rest[hopsIdx + 1], 10) : 4;
   const kindIdx = rest.indexOf("--kind");
-  let kind = kindIdx !== -1 ? rest[kindIdx + 1] : null;
+  const kind = kindIdx !== -1 ? rest[kindIdx + 1] : null;
   const actionIdx = rest.indexOf("--action");
   const actionMethod = actionIdx !== -1 ? rest[actionIdx + 1] : null;
+  return { eventsPath, commandsPath, seed, maxHops, kind, actionMethod };
+}
 
+function loadGraphs(eventsPath, commandsPath) {
   const eventsGraph = JSON.parse(fs.readFileSync(eventsPath, "utf-8"));
   const commandsGraph = JSON.parse(fs.readFileSync(commandsPath, "utf-8"));
+  return { eventsGraph, commandsGraph };
+}
 
+function buildIndexMaps(eventsGraph, commandsGraph) {
   const eventsByName = new Map(eventsGraph.map((n) => [n.eventName, n]));
   const requestsByType = new Map(commandsGraph.requests.map((r) => [r.requestType, r]));
   const endpointsByController = new Map();
@@ -295,17 +295,19 @@ function main() {
     }
     endpointsByController.get(ep.controllerClass).push(ep);
   }
+  return { eventsByName, requestsByType, endpointsByController };
+}
 
-  if (!kind) {
-    if (eventsByName.has(seed)) kind = "event";
-    else if (requestsByType.has(seed)) kind = "request";
-    else if (endpointsByController.has(seed)) kind = "controller";
-    else {
-      console.error(`Could not find "${seed}" as an event, request type, or controller class.`);
-      process.exit(1);
-    }
-  }
+function detectKind(kind, seed, eventsByName, requestsByType, endpointsByController) {
+  if (kind) return kind;
+  if (eventsByName.has(seed)) return "event";
+  if (requestsByType.has(seed)) return "request";
+  if (endpointsByController.has(seed)) return "controller";
+  console.error(`Could not find "${seed}" as an event, request type, or controller class.`);
+  process.exit(1);
+}
 
+function buildDiagram(kind, seed, maxHops, actionMethod, eventsByName, requestsByType, endpointsByController) {
   const builder = new DiagramBuilder(eventsByName, requestsByType, endpointsByController);
   if (kind === "event") builder.visitEvent(seed, maxHops);
   else if (kind === "request") builder.visitRequest(seed, maxHops);
@@ -314,6 +316,24 @@ function main() {
     console.error(`Unknown --kind: ${kind}`);
     process.exit(1);
   }
+  return builder;
+}
+
+function main() {
+  const { eventsPath, commandsPath, seed, maxHops, kind: initialKind, actionMethod } = parseArguments(process.argv);
+  
+  if (!eventsPath || !commandsPath || !seed) {
+    console.error(
+      "Usage: node generate-flow-diagram.mjs <events.json> <commands.json> <seed> [--kind event|request|controller] [--hops N]",
+    );
+    process.exit(1);
+  }
+
+  const { eventsGraph, commandsGraph } = loadGraphs(eventsPath, commandsPath);
+  const { eventsByName, requestsByType, endpointsByController } = buildIndexMaps(eventsGraph, commandsGraph);
+  
+  const kind = detectKind(initialKind, seed, eventsByName, requestsByType, endpointsByController);
+  const builder = buildDiagram(kind, seed, maxHops, actionMethod, eventsByName, requestsByType, endpointsByController);
 
   console.log(builder.toString());
 }

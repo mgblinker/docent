@@ -1,4 +1,4 @@
-import type { IncomingMessage } from 'http';
+import type { IncomingMessage } from 'node:http';
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyOptions } from 'jose';
 
 export interface AuthConfig {

@@ -38,6 +38,7 @@ async function main() {
   const config = await loadConfig();
   const docsDir = path.resolve(__dirname, '..', process.env.DOCS_DIR || config.docsDir);
   const app = express();
+  app.disable('x-powered-by');
   const port = Number.parseInt(process.env.PORT || '3100');
   const scanOpts = buildScanOpts(config);
 

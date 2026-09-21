@@ -41,7 +41,26 @@ interface Edge {
 }
 
 function escapeXml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return text
+    .replaceAll('&', "&amp;")
+    .replaceAll('<', "&lt;")
+    .replaceAll('>', "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+// Stable +1/-1 per edge key so the same pair always curves the same
+// direction across redraws, while different pairs sharing similar
+// geometry tend to bow opposite ways instead of overlapping exactly.
+function curveSign(key: string): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = Math.trunc(h * 31 + (key.codePointAt(i) ?? 0));
+  return h % 2 === 0 ? 1 : -1;
+}
+
+function computeBowAmount(dist: number, key: string): number {
+  const closeness = Math.max(0, 1 - dist / 80);
+  const bowFloor = 12 + closeness * 48;
+  return Math.min(60, Math.max(bowFloor, dist * 0.15)) * curveSign(key);
 }
 
 // Plain DOM/SVG instead of a graph library: the actual layout need here -
@@ -64,7 +83,9 @@ export function initOverviewGraph(container: HTMLElement): void {
 }
 
 function initOne(wrapper: HTMLElement): void {
-  const script = wrapper.querySelector<HTMLScriptElement>("script[data-overview-graph]");
+  const script = wrapper.querySelector<HTMLScriptElement>(
+    "script[data-overview-graph]",
+  );
   if (!script) return;
 
   let data: OverviewGraphData;
@@ -86,18 +107,24 @@ function initOne(wrapper: HTMLElement): void {
     }));
   const edges: Edge[] = data.elements
     .filter((e) => e.data.source && e.data.target)
-    .map((e) => ({ source: e.data.source!, target: e.data.target!, label: e.data.label || "" }));
+    .map((e) => ({
+      source: e.data.source!,
+      target: e.data.target!,
+      label: e.data.label || "",
+    }));
   const flowList = data.flowList || [];
 
   const childrenByModule = new Map<string, ChildNode[]>();
   for (const child of childNodes) {
-    if (!childrenByModule.has(child.parent)) childrenByModule.set(child.parent, []);
+    if (!childrenByModule.has(child.parent))
+      childrenByModule.set(child.parent, []);
     childrenByModule.get(child.parent)!.push(child);
   }
 
   const moduleIds = new Set(moduleNodes.map((m) => m.data.id));
   const parentOf = new Map(childNodes.map((c) => [c.id, c.parent]));
-  const ownerOf = (id: string): string | undefined => (moduleIds.has(id) ? id : parentOf.get(id));
+  const ownerOf = (id: string): string | undefined =>
+    moduleIds.has(id) ? id : parentOf.get(id);
 
   // Cross-module connections, aggregated for the collapsed overview - two
   // modules are "related" if any edge crosses between something owned by
@@ -123,7 +150,8 @@ function initOne(wrapper: HTMLElement): void {
   for (const id of moduleIds) nodeAdjacency.set(id, new Set());
   for (const child of childNodes) nodeAdjacency.set(child.id, new Set());
   for (const edge of edges) {
-    if (!nodeAdjacency.has(edge.source) || !nodeAdjacency.has(edge.target)) continue;
+    if (!nodeAdjacency.has(edge.source) || !nodeAdjacency.has(edge.target))
+      continue;
     nodeAdjacency.get(edge.source)!.add(edge.target);
     nodeAdjacency.get(edge.target)!.add(edge.source);
   }
@@ -179,9 +207,15 @@ function initOne(wrapper: HTMLElement): void {
   const grid = wrapper.querySelector<HTMLElement>(".overview-grid")!;
   const svg = wrapper.querySelector<SVGSVGElement>(".overview-edges")!;
   const panel = wrapper.querySelector<HTMLElement>(".overview-flow-panel")!;
-  const resetButton = wrapper.querySelector<HTMLButtonElement>(".overview-reset-button")!;
-  const flowComboInput = wrapper.querySelector<HTMLInputElement>(".overview-flow-combo-input")!;
-  const flowComboList = wrapper.querySelector<HTMLElement>(".overview-flow-combo-list")!;
+  const resetButton = wrapper.querySelector<HTMLButtonElement>(
+    ".overview-reset-button",
+  )!;
+  const flowComboInput = wrapper.querySelector<HTMLInputElement>(
+    ".overview-flow-combo-input",
+  )!;
+  const flowComboList = wrapper.querySelector<HTMLElement>(
+    ".overview-flow-combo-list",
+  )!;
 
   // Single text field instead of a select + separate filter box - typing
   // narrows the list (by title OR module name, so "Licensing" surfaces
@@ -190,7 +224,11 @@ function initOne(wrapper: HTMLElement): void {
   // selects one. A group with zero visible items hides too, instead of
   // showing as an empty label.
   function comboItems(): HTMLElement[] {
-    return [...flowComboList.querySelectorAll<HTMLElement>(".overview-flow-combo-item")];
+    return [
+      ...flowComboList.querySelectorAll<HTMLElement>(
+        ".overview-flow-combo-item",
+      ),
+    ];
   }
 
   function filterCombo(): void {
@@ -199,16 +237,25 @@ function initOne(wrapper: HTMLElement): void {
     // to empty should show every flow again, not leave the list stuck shut.
     flowComboList.hidden = false;
     const query = flowComboInput.value.trim().toLowerCase();
-    flowComboList.querySelectorAll<HTMLElement>(".overview-flow-combo-group").forEach((group) => {
-      const label = group.querySelector(".overview-flow-combo-group-label")!.textContent!.toLowerCase();
-      let anyVisible = false;
-      group.querySelectorAll<HTMLElement>(".overview-flow-combo-item").forEach((item) => {
-        const matches = !query || item.textContent!.toLowerCase().includes(query) || label.includes(query);
-        item.hidden = !matches;
-        if (matches) anyVisible = true;
+    flowComboList
+      .querySelectorAll<HTMLElement>(".overview-flow-combo-group")
+      .forEach((group) => {
+        const label = group
+          .querySelector(".overview-flow-combo-group-label")!
+          .textContent!.toLowerCase();
+        let anyVisible = false;
+        group
+          .querySelectorAll<HTMLElement>(".overview-flow-combo-item")
+          .forEach((item) => {
+            const matches =
+              !query ||
+              item.textContent!.toLowerCase().includes(query) ||
+              label.includes(query);
+            item.hidden = !matches;
+            if (matches) anyVisible = true;
+          });
+        group.hidden = !anyVisible;
       });
-      group.hidden = !anyVisible;
-    });
     clearComboHighlight();
   }
 
@@ -248,7 +295,9 @@ function initOne(wrapper: HTMLElement): void {
   flowComboInput.addEventListener("keydown", (e) => {
     const visible = comboItems().filter((item) => !item.hidden);
     if (visible.length === 0) return;
-    const currentIdx = visible.findIndex((item) => item.classList.contains("highlighted"));
+    const currentIdx = visible.findIndex((item) =>
+      item.classList.contains("highlighted"),
+    );
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -271,7 +320,9 @@ function initOne(wrapper: HTMLElement): void {
   flowComboList.addEventListener("mousedown", (e) => {
     // mousedown (not click) fires before the input's blur, so the item is
     // still there to read when chooseComboItem runs.
-    const item = (e.target as HTMLElement).closest<HTMLElement>(".overview-flow-combo-item");
+    const item = (e.target as HTMLElement).closest<HTMLElement>(
+      ".overview-flow-combo-item",
+    );
     if (item) chooseComboItem(item);
   });
 
@@ -285,7 +336,10 @@ function initOne(wrapper: HTMLElement): void {
       <div class="overview-module-header" data-id="${id}">${mod.data.label}</div>
       <div class="overview-module-children" hidden>
         ${children
-          .map((c) => `<div class="overview-child kind-${c.kind}" data-id="${c.id}">${c.label}</div>`)
+          .map(
+            (c) =>
+              `<div class="overview-child kind-${c.kind}" data-id="${c.id}">${c.label}</div>`,
+          )
           .join("")}
       </div>
     `;
@@ -343,15 +397,24 @@ function initOne(wrapper: HTMLElement): void {
   // handler may have just deliberately opened the very module being
   // clicked, right before this runs).
   function clearHighlight(collapseChildren: boolean): void {
-    wrapper.querySelectorAll<HTMLElement>(".overview-module, .overview-child").forEach((el) => {
-      el.classList.remove("related", "selected", "overview-flow-start", "overview-flow-origin");
-      el.style.order = "";
-      showAnimated(el);
-    });
-    if (collapseChildren) {
-      wrapper.querySelectorAll<HTMLElement>(".overview-module-children").forEach((el) => {
-        el.hidden = true;
+    wrapper
+      .querySelectorAll<HTMLElement>(".overview-module, .overview-child")
+      .forEach((el) => {
+        el.classList.remove(
+          "related",
+          "selected",
+          "overview-flow-start",
+          "overview-flow-origin",
+        );
+        el.style.order = "";
+        showAnimated(el);
       });
+    if (collapseChildren) {
+      wrapper
+        .querySelectorAll<HTMLElement>(".overview-module-children")
+        .forEach((el) => {
+          el.hidden = true;
+        });
     }
     panel.innerHTML = "";
     resetButton.hidden = true;
@@ -396,7 +459,8 @@ function initOne(wrapper: HTMLElement): void {
         el.classList.add("selected");
       } else if (el.dataset.id && related.has(el.dataset.id)) {
         el.classList.add("related");
-        el.querySelector<HTMLElement>(".overview-module-children")!.hidden = false;
+        el.querySelector<HTMLElement>(".overview-module-children")!.hidden =
+          false;
       } else {
         hideAnimated(el);
       }
@@ -423,14 +487,17 @@ function initOne(wrapper: HTMLElement): void {
     // e.g. an event consumed generically by a module with no single
     // handler node tracked for it).
     const related = nodeAdjacency.get(id) || new Set();
-    const relatedChildIds = new Set([...related].filter((nid) => parentOf.has(nid)));
+    const relatedChildIds = new Set(
+      [...related].filter((nid) => parentOf.has(nid)),
+    );
     const relevantModuleIds = new Set(
       [id, ...related].map((nid) => ownerOf(nid)).filter(Boolean) as string[],
     );
 
     wrapper.querySelectorAll<HTMLElement>(".overview-child").forEach((el) => {
       if (el.dataset.id === id) el.classList.add("selected");
-      else if (el.dataset.id && relatedChildIds.has(el.dataset.id)) el.classList.add("related");
+      else if (el.dataset.id && relatedChildIds.has(el.dataset.id))
+        el.classList.add("related");
       else hideAnimated(el);
     });
     // Every relevant module - the selected child's own, and any other one
@@ -444,7 +511,8 @@ function initOne(wrapper: HTMLElement): void {
         return;
       }
       el.classList.add(modId === homeModuleId ? "selected" : "related");
-      el.querySelector<HTMLElement>(".overview-module-children")!.hidden = false;
+      el.querySelector<HTMLElement>(".overview-module-children")!.hidden =
+        false;
     });
     const child = childNodes.find((c) => c.id === id);
     showFlowsFor(id, child?.label || id);
@@ -532,14 +600,18 @@ function initOne(wrapper: HTMLElement): void {
       }
       el.classList.add("related");
       el.style.order = String(moduleOrder.get(modId) ?? 0);
-      const childrenContainer = el.querySelector<HTMLElement>(".overview-module-children")!;
+      const childrenContainer = el.querySelector<HTMLElement>(
+        ".overview-module-children",
+      )!;
       childrenContainer.hidden = false;
       // A module the flow touches can still own children this flow never
       // reaches (e.g. sibling CRUD commands on the same module) - only the
       // ones actually part of the flow's own traced chain should show.
-      childrenContainer.querySelectorAll<HTMLElement>(".overview-child").forEach((child) => {
-        child.hidden = !inCurrentFlow(child.dataset.id!);
-      });
+      childrenContainer
+        .querySelectorAll<HTMLElement>(".overview-child")
+        .forEach((child) => {
+          child.hidden = !inCurrentFlow(child.dataset.id!);
+        });
     });
     // A flow's own trace can dead-end at a node another, separately-
     // generated flow also picks up from (hop budget, or a module handoff
@@ -549,12 +621,16 @@ function initOne(wrapper: HTMLElement): void {
     const continuesIntoHtml =
       flow.continuesInto.length > 0
         ? `<div class="overview-flow-panel-title">Continues into:</div><ul>${flow.continuesInto
-            .map((f) => `<li><a href="#/${f.path}">${escapeXml(f.title)}</a></li>`)
+            .map(
+              (f) => `<li><a href="#/${f.path}">${escapeXml(f.title)}</a></li>`,
+            )
             .join("")}</ul>`
         : "";
     panel.innerHTML = `<div class="overview-flow-panel-title">Flow: "${escapeXml(flow.title)}"</div><ul><li><a href="#/${flow.path}">Open the full flow page</a></li></ul>${continuesIntoHtml}`;
     resetButton.hidden = false;
-    currentFlowEdgeSeq = new Map(flow.edges.map((e, i) => [`${e.from}=>${e.to}`, i + 1]));
+    currentFlowEdgeSeq = new Map(
+      flow.edges.map((e, i) => [`${e.from}=>${e.to}`, i + 1]),
+    );
     // Marks the entry point (the controller action itself) with a dot -
     // it might currently be a collapsed module standing in for it, or its
     // own expanded box, either is a valid element to mark.
@@ -571,10 +647,14 @@ function initOne(wrapper: HTMLElement): void {
     // same idea) so it's clear this is deliberate.
     const hasIncoming = new Set(flow.edges.map((e) => e.to));
     const originIds = new Set(
-      flow.edges.map((e) => e.from).filter((id) => !hasIncoming.has(id) && id !== flow.startNodeId),
+      flow.edges
+        .map((e) => e.from)
+        .filter((id) => !hasIncoming.has(id) && id !== flow.startNodeId),
     );
     for (const id of originIds) {
-      const el = wrapper.querySelector<HTMLElement>(`.overview-module[data-id="${id}"], .overview-child[data-id="${id}"]`);
+      const el = wrapper.querySelector<HTMLElement>(
+        `.overview-module[data-id="${id}"], .overview-child[data-id="${id}"]`,
+      );
       el?.classList.add("overview-flow-origin");
     }
     hasSelection = true;
@@ -613,7 +693,10 @@ function initOne(wrapper: HTMLElement): void {
   // center. The edges layer renders above the boxes, so a line/arrowhead
   // reaching all the way to a box's center would sit on top of that box's
   // own label text; clipping to the border keeps it right at the edge.
-  function edgePoint(from: Box, to: { x: number; y: number }): { x: number; y: number } {
+  function edgePoint(
+    from: Box,
+    to: { x: number; y: number },
+  ): { x: number; y: number } {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     if (dx === 0 && dy === 0) return { x: from.x, y: from.y };
@@ -623,13 +706,111 @@ function initOne(wrapper: HTMLElement): void {
     return { x: from.x + dx * scale, y: from.y + dy * scale };
   }
 
-  // Stable +1/-1 per edge key so the same pair always curves the same
-  // direction across redraws, while different pairs sharing similar
-  // geometry tend to bow opposite ways instead of overlapping exactly.
-  function curveSign(key: string): number {
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
-    return h % 2 === 0 ? 1 : -1;
+  function buildElementBoxes(
+    svgRect: DOMRect,
+  ): {
+    boxes: Map<string, Box>;
+    visibleModules: Set<string>;
+    collapsedChildModule: Map<string, string>;
+  } {
+    const boxes = new Map<string, Box>();
+    const visibleModules = new Set<string>();
+    const collapsedChildModule = new Map<string, string>();
+
+    wrapper
+      .querySelectorAll<HTMLElement>(".overview-module:not([hidden])")
+      .forEach((el) => {
+        const id = el.dataset.id!;
+        visibleModules.add(id);
+        const r = el.getBoundingClientRect();
+        boxes.set(id, {
+          x: r.left - svgRect.left + r.width / 2,
+          y: r.top - svgRect.top + r.height / 2,
+          w: r.width,
+          h: r.height,
+        });
+
+        const childrenEl = el.querySelector<HTMLElement>(
+          ".overview-module-children",
+        )!;
+        if (childrenEl.hidden) {
+          for (const child of childrenByModule.get(id) || [])
+            collapsedChildModule.set(child.id, id);
+        }
+      });
+
+    wrapper
+      .querySelectorAll<HTMLElement>(".overview-child:not([hidden])")
+      .forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const id = el.dataset.id!;
+        boxes.set(id, {
+          x: r.left - svgRect.left + r.width / 2,
+          y: r.top - svgRect.top + r.height / 2,
+          w: r.width,
+          h: r.height,
+        });
+      });
+
+    return { boxes, visibleModules, collapsedChildModule };
+  }
+
+  function groupEdgesByRepresentative(
+    boxes: Map<string, Box>,
+    visibleModules: Set<string>,
+    collapsedChildModule: Map<string, string>,
+  ): Map<string, { a: string; b: string; labels: Set<string>; seqs: Set<number> }> {
+    const grouped = new Map<
+      string,
+      { a: string; b: string; labels: Set<string>; seqs: Set<number> }
+    >();
+
+    for (const edge of edges) {
+      if (!inCurrentFlow(edge.source) || !inCurrentFlow(edge.target)) continue;
+
+      const a = representativeId(edge.source, visibleModules, collapsedChildModule);
+      const b = representativeId(edge.target, visibleModules, collapsedChildModule);
+
+      if (!a || !b || a === b || !boxes.has(a) || !boxes.has(b)) continue;
+
+      const key = `${a}=>${b}`;
+      if (!grouped.has(key))
+        grouped.set(key, { a, b, labels: new Set(), seqs: new Set() });
+
+      const group = grouped.get(key)!;
+      if (edge.label) group.labels.add(edge.label);
+
+      const seq = currentFlowEdgeSeq?.get(`${edge.source}=>${edge.target}`);
+      if (seq !== undefined) group.seqs.add(seq);
+    }
+
+    return grouped;
+  }
+
+  function buildEdgeLabel(
+    labels: Set<string>,
+    seqs: Set<number>,
+    start: { x: number; y: number },
+    ctrlX: number,
+    ctrlY: number,
+    end: { x: number; y: number },
+    key: string,
+  ): string | null {
+    const seqPrefix =
+      seqs.size > 0 ? `${[...seqs].sort((x, y) => x - y).join(",")}. ` : "";
+    if (labels.size === 0 && !seqPrefix) return null;
+
+    const labelList = [...labels];
+    const labelText =
+      labelList.length > 2
+        ? `${labelList.slice(0, 2).join(", ")}…`
+        : labelList.join(", ");
+    const text = seqPrefix + labelText;
+
+    const labelX = 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x;
+    const labelY = 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y;
+
+    return `<text x="${labelX}" y="${labelY}" class="overview-edge-label" data-edge-key="${key}">${escapeXml(text)}</text>`;
   }
 
   function drawEdges(): void {
@@ -638,57 +819,18 @@ function initOne(wrapper: HTMLElement): void {
       return;
     }
 
-    // Origin is the SVG's own rendered position, not the wrapper's - the
-    // scroll container's padding shifts the grid's content box relative to
-    // the wrapper, but not an absolutely-positioned child at top:0/left:0,
-    // so using the wrapper as the coordinate baseline would silently drift
-    // by that padding amount.
     const svgRect = svg.getBoundingClientRect();
     svg.setAttribute("width", String(grid.scrollWidth));
     svg.setAttribute("height", String(grid.scrollHeight));
 
-    const boxes = new Map<string, Box>();
-    const visibleModules = new Set<string>();
-    const collapsedChildModule = new Map<string, string>(); // childId -> module id standing in for it
-
-    wrapper.querySelectorAll<HTMLElement>(".overview-module:not([hidden])").forEach((el) => {
-      const id = el.dataset.id!;
-      visibleModules.add(id);
-      const r = el.getBoundingClientRect();
-      boxes.set(id, { x: r.left - svgRect.left + r.width / 2, y: r.top - svgRect.top + r.height / 2, w: r.width, h: r.height });
-
-      const childrenEl = el.querySelector<HTMLElement>(".overview-module-children")!;
-      if (childrenEl.hidden) {
-        for (const child of childrenByModule.get(id) || []) collapsedChildModule.set(child.id, id);
-      }
-    });
-    wrapper.querySelectorAll<HTMLElement>(".overview-child:not([hidden])").forEach((el) => {
-      const r = el.getBoundingClientRect();
-      const id = el.dataset.id!;
-      boxes.set(id, { x: r.left - svgRect.left + r.width / 2, y: r.top - svgRect.top + r.height / 2, w: r.width, h: r.height });
-    });
-
-    // Multiple raw edges can resolve to the same visible pair (several
-    // children collapsed into the same two module boxes) - group them so
-    // one line carries a combined label instead of stacking duplicates.
-    const grouped = new Map<string, { a: string; b: string; labels: Set<string>; seqs: Set<number> }>();
-    for (const edge of edges) {
-      if (!inCurrentFlow(edge.source) || !inCurrentFlow(edge.target)) continue;
-      const a = representativeId(edge.source, visibleModules, collapsedChildModule);
-      const b = representativeId(edge.target, visibleModules, collapsedChildModule);
-      if (!a || !b || a === b) continue;
-      if (!boxes.has(a) || !boxes.has(b)) continue;
-      const key = `${a}=>${b}`;
-      if (!grouped.has(key)) grouped.set(key, { a, b, labels: new Set(), seqs: new Set() });
-      const group = grouped.get(key)!;
-      if (edge.label) group.labels.add(edge.label);
-      const seq = currentFlowEdgeSeq?.get(`${edge.source}=>${edge.target}`);
-      if (seq !== undefined) group.seqs.add(seq);
-    }
+    const { boxes, visibleModules, collapsedChildModule } =
+      buildElementBoxes(svgRect);
+    const grouped = groupEdgesByRepresentative(boxes, visibleModules, collapsedChildModule);
 
     const parts = [
       '<defs><marker id="overview-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" /></marker></defs>',
     ];
+
     for (const [key, { a, b, labels, seqs }] of grouped) {
       const boxA = boxes.get(a)!;
       const boxB = boxes.get(b)!;
@@ -698,61 +840,41 @@ function initOne(wrapper: HTMLElement): void {
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       const dist = Math.hypot(dx, dy) || 1;
-      // Two boxes sitting almost edge-to-edge (same row, ~12px gap between
-      // adjacent children) left the old flat 12px floor with barely any
-      // room to clear the boxes' own ~33px height - the curve (and its
-      // label, sitting right at its midpoint) cut straight across both
-      // boxes' text instead of arching over them. Scale the floor up for
-      // short distances specifically, tapering smoothly back to the
-      // original 12px by the time boxes are far enough apart that a small
-      // bow already clears them fine on its own.
-      // A quadratic bezier's midpoint (where the label sits) only deviates
-      // from the straight chord by HALF the control point's own offset
-      // (B(0.5) = 0.25*P0 + 0.5*P1 + 0.25*P2) - so clearing a ~33px-tall
-      // box by a comfortable margin needs roughly double that box height
-      // in raw bow, not just the box height itself.
-      const closeness = Math.max(0, 1 - dist / 80);
-      const bowFloor = 12 + closeness * 48;
-      const bow = Math.min(60, Math.max(bowFloor, dist * 0.15)) * curveSign(key);
+      const bow = computeBowAmount(dist, key);
+
       const ctrlX = (start.x + end.x) / 2 + (-dy / dist) * bow;
       const ctrlY = (start.y + end.y) / 2 + (dx / dist) * bow;
 
       parts.push(
         `<path d="M ${start.x} ${start.y} Q ${ctrlX} ${ctrlY} ${end.x} ${end.y}" marker-end="url(#overview-arrow)" data-edge-key="${key}" data-a="${a}" data-b="${b}" />`,
       );
-      // Step number(s) only show up while one flow is selected (seqs is
-      // only ever populated from currentFlowEdgeSeq); prefixed onto the
-      // same label so a numbered arrow doesn't need a second text element.
-      const seqPrefix = seqs.size > 0 ? `${[...seqs].sort((x, y) => x - y).join(",")}. ` : "";
-      if (labels.size > 0 || seqPrefix) {
-        const labelList = [...labels];
-        const labelText = labelList.length > 2 ? `${labelList.slice(0, 2).join(", ")}…` : labelList.join(", ");
-        const text = seqPrefix + labelText;
-        // Point on the quadratic curve at t=0.5.
-        const labelX = 0.25 * start.x + 0.5 * ctrlX + 0.25 * end.x;
-        const labelY = 0.25 * start.y + 0.5 * ctrlY + 0.25 * end.y;
-        parts.push(
-          `<text x="${labelX}" y="${labelY}" class="overview-edge-label" data-edge-key="${key}">${escapeXml(text)}</text>`,
-        );
-      }
+
+      const labelSvg = buildEdgeLabel(labels, seqs, start, ctrlX, ctrlY, end, key);
+      if (labelSvg) parts.push(labelSvg);
     }
+
     svg.innerHTML = parts.join("");
   }
 
   wrapper.addEventListener("click", (e) => {
-    const childEl = (e.target as HTMLElement).closest<HTMLElement>(".overview-child");
+    const childEl = (e.target as HTMLElement).closest<HTMLElement>(
+      ".overview-child",
+    );
     if (childEl?.dataset.id) {
       selectChild(childEl.dataset.id);
       return;
     }
-    const headerEl = (e.target as HTMLElement).closest<HTMLElement>(".overview-module-header");
+    const headerEl = (e.target as HTMLElement).closest<HTMLElement>(
+      ".overview-module-header",
+    );
     if (headerEl?.dataset.id) {
       const box = headerEl.closest<HTMLElement>(".overview-module")!;
-      const childrenEl = box.querySelector<HTMLElement>(".overview-module-children")!;
+      const childrenEl = box.querySelector<HTMLElement>(
+        ".overview-module-children",
+      )!;
       childrenEl.hidden = !childrenEl.hidden;
       selectModule(headerEl.dataset.id);
       requestAnimationFrame(drawEdges);
-      return;
     }
   });
 
@@ -772,8 +894,8 @@ function initOne(wrapper: HTMLElement): void {
   function relatedRepresentativeIds(rawId: string): Set<string> {
     const result = new Set<string>();
     svg.querySelectorAll<SVGElement>("path[data-edge-key]").forEach((el) => {
-      const a = el.getAttribute("data-a");
-      const b = el.getAttribute("data-b");
+      const a = el.dataset.a;
+      const b = el.dataset.b;
       if (a === rawId && b) result.add(b);
       else if (b === rawId && a) result.add(a);
     });
@@ -785,7 +907,10 @@ function initOne(wrapper: HTMLElement): void {
   // the representative endpoint of a highlighted edge (relatedRepresentativeIds
   // may return a module id), but that id simply won't match anything below
   // since only `.overview-child` is queried - the box itself stays untouched.
-  function applyHoverHighlight(highlightNodeIds: Set<string>, highlightEdgeKeys: Set<string>): void {
+  function applyHoverHighlight(
+    highlightNodeIds: Set<string>,
+    highlightEdgeKeys: Set<string>,
+  ): void {
     wrapper.querySelectorAll<HTMLElement>(".overview-child").forEach((el) => {
       const id = el.dataset.id;
       const on = Boolean(id && highlightNodeIds.has(id));
@@ -793,7 +918,7 @@ function initOne(wrapper: HTMLElement): void {
       el.classList.toggle("hover-dim", !on);
     });
     svg.querySelectorAll<SVGElement>("[data-edge-key]").forEach((el) => {
-      const on = highlightEdgeKeys.has(el.getAttribute("data-edge-key") || "");
+      const on = highlightEdgeKeys.has(el.dataset.edgeKey || "");
       el.classList.toggle("hover-highlight", on);
       el.classList.toggle("hover-dim", !on);
     });
@@ -831,8 +956,8 @@ function initOne(wrapper: HTMLElement): void {
     }
     const edgeEl = target.closest("[data-edge-key]");
     if (edgeEl) {
-      const a = edgeEl.getAttribute("data-a");
-      const b = edgeEl.getAttribute("data-b");
+      const a = (edgeEl as SVGElement).dataset.a;
+      const b = (edgeEl as SVGElement).dataset.b;
       if (a && b) hoverEdge(a, b);
     }
   });

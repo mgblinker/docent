@@ -10,12 +10,15 @@
 // Everything here is derived data - regenerate by re-running this script
 // whenever the source repos change. Do not hand-edit the output files.
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildEventGraph } from "./extract-event-graph.mjs";
 import { buildCommandGraph } from "./extract-command-graph.mjs";
-import { buildGatewayRoutes, resolvePublicUrl } from "./extract-gateway-routes.mjs";
+import {
+  buildGatewayRoutes,
+  resolvePublicUrl,
+} from "./extract-gateway-routes.mjs";
 import { DiagramBuilder } from "./generate-flow-diagram.mjs";
 import { humanizeIdentifier, buildClassHierarchy } from "./lib/cs-scan.mjs";
 
@@ -36,10 +39,14 @@ function humanizeEventName(name) {
 }
 
 function sanitizeFilename(name) {
-  return name
-    .replace(/[^A-Za-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase();
+  let result = name.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+/, "");
+
+  // Remove trailing dashes
+  while (result.endsWith("-")) {
+    result = result.slice(0, -1);
+  }
+
+  return result.toLowerCase();
 }
 
 // "Backend/Communications" -> docs/flows/Backend/Communications/ ; a plain
@@ -51,8 +58,12 @@ function moduleDir(module) {
 }
 
 function isInteresting(builder, seedModule) {
-  const touchesEvent = [...builder.nodeIds.keys()].some((k) => k.startsWith("EVT:"));
-  const touchesOtherModule = [...builder.moduleIds.keys()].some((m) => m !== seedModule);
+  const touchesEvent = [...builder.nodeIds.keys()].some((k) =>
+    k.startsWith("EVT:"),
+  );
+  const touchesOtherModule = [...builder.moduleIds.keys()].some(
+    (m) => m !== seedModule,
+  );
   return touchesEvent || touchesOtherModule;
 }
 
@@ -64,18 +75,11 @@ function cleanGeneratedDir(dir) {
   }
 }
 
-function main() {
-  console.error("Building event graph...");
-  const eventGraph = buildEventGraph();
-  console.error("Building command graph...");
-  const commandGraph = buildCommandGraph();
-  console.error("Building gateway routes...");
-  const gatewayRoutes = buildGatewayRoutes();
-  console.error("Building class hierarchy...");
-  const classHierarchy = buildClassHierarchy();
-
+function buildGraphMaps(eventGraph, commandGraph) {
   const eventsByName = new Map(eventGraph.map((n) => [n.eventName, n]));
-  const requestsByType = new Map(commandGraph.requests.map((r) => [r.requestType, r]));
+  const requestsByType = new Map(
+    commandGraph.requests.map((r) => [r.requestType, r]),
+  );
   const endpointsByController = new Map();
   for (const ep of commandGraph.endpoints) {
     if (!endpointsByController.has(ep.controllerClass)) {
@@ -83,32 +87,44 @@ function main() {
     }
     endpointsByController.get(ep.controllerClass).push(ep);
   }
+  return { eventsByName, requestsByType, endpointsByController };
+}
 
-  // Group by (controllerClass, actionMethod) - one entry per HTTP action,
-  // not per controller. actionMethod resolves for effectively every
-  // endpoint in this codebase (0 misses out of 719 at last check); an
-  // unresolved one just falls back to being its own single-endpoint group
-  // keyed by route instead of method name.
-  const actionGroups = new Map(); // key -> { controllerClass, actionMethod, endpoints }
+function groupEndpointsByAction(commandGraph) {
+  const actionGroups = new Map();
   for (const ep of commandGraph.endpoints) {
     const key = `${ep.controllerClass}::${ep.actionMethod || ep.routeSegment || ep.httpMethod}`;
     if (!actionGroups.has(key)) {
-      actionGroups.set(key, { controllerClass: ep.controllerClass, actionMethod: ep.actionMethod, endpoints: [] });
+      actionGroups.set(key, {
+        controllerClass: ep.controllerClass,
+        actionMethod: ep.actionMethod,
+        endpoints: [],
+      });
     }
     actionGroups.get(key).endpoints.push(ep);
   }
+  return actionGroups;
+}
 
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  // Clean previously generated pages/folders so removed/renamed actions or
-  // modules don't leave stale files behind.
-  cleanGeneratedDir(OUT_DIR);
-
-  // First pass: build every interesting action's diagram + a candidate
-  // (not yet disambiguated) human title, so we know which titles collide
-  // before touching the filesystem.
+function buildHttpTriggeredCandidates(
+  actionGroups,
+  eventsByName,
+  requestsByType,
+  endpointsByController,
+  classHierarchy,
+) {
   const candidates = [];
-  for (const { controllerClass, actionMethod, endpoints } of actionGroups.values()) {
-    const builder = new DiagramBuilder(eventsByName, requestsByType, endpointsByController, classHierarchy);
+  for (const {
+    controllerClass,
+    actionMethod,
+    endpoints,
+  } of actionGroups.values()) {
+    const builder = new DiagramBuilder(
+      eventsByName,
+      requestsByType,
+      endpointsByController,
+      classHierarchy,
+    );
     builder.visitController(controllerClass, 5, actionMethod);
 
     if (!isInteresting(builder, endpoints[0].module)) continue;
@@ -119,35 +135,49 @@ function main() {
       endpoints,
       mermaid: builder.toString(),
       moduleList: [...builder.moduleIds.keys()],
-      nodeIdsTouched: [...builder.nodeIds.values(), ...builder.moduleIds.values()],
+      nodeIdsTouched: [
+        ...builder.nodeIds.values(),
+        ...builder.moduleIds.values(),
+      ],
       edgeList: builder.edgeList.slice(),
       visitedEventNames: [...builder.visitedEvents],
-      baseTitle: actionMethod ? humanizeIdentifier(actionMethod) : humanizeIdentifier(controllerClass),
+      baseTitle: actionMethod
+        ? humanizeIdentifier(actionMethod)
+        : humanizeIdentifier(controllerClass),
     });
   }
+  return candidates;
+}
 
-  // Not every flow starts at an HTTP call - a scheduled job or another
-  // background process can publish an event with no controller action
-  // anywhere upstream of it. Any event none of the HTTP-seeded candidates
-  // above ever reached is exactly that: an automated trigger, and gets its
-  // own flow page seeded directly from the event instead of an action.
+function buildAutomatedTriggerCandidates(
+  eventGraph,
+  candidates,
+  eventsByName,
+  requestsByType,
+  endpointsByController,
+  classHierarchy,
+) {
   const httpCoveredEventNames = new Set();
-  for (const c of candidates) for (const name of c.visitedEventNames) httpCoveredEventNames.add(name);
+  for (const c of candidates)
+    for (const name of c.visitedEventNames) httpCoveredEventNames.add(name);
 
+  const automatedCandidates = [];
   for (const eventNode of eventGraph) {
     if (httpCoveredEventNames.has(eventNode.eventName)) continue;
 
-    const builder = new DiagramBuilder(eventsByName, requestsByType, endpointsByController, classHierarchy);
+    const builder = new DiagramBuilder(
+      eventsByName,
+      requestsByType,
+      endpointsByController,
+      classHierarchy,
+    );
     builder.visitEvent(eventNode.eventName, 5);
 
-    // Attribute the flow to the event's own publisher module when known
-    // (the real "where this automated trigger originates"); fall back to
-    // whichever module reacts to it if no producer was extracted, since a
-    // flow page still needs some folder to live in.
-    const originModule = eventNode.producers[0]?.module || eventNode.consumers[0]?.module;
+    const originModule =
+      eventNode.producers[0]?.module || eventNode.consumers[0]?.module;
     if (!originModule) continue;
 
-    candidates.push({
+    automatedCandidates.push({
       controllerClass: null,
       actionMethod: null,
       endpoints: null,
@@ -156,38 +186,51 @@ function main() {
       originModule,
       mermaid: builder.toString(),
       moduleList: [...builder.moduleIds.keys()],
-      nodeIdsTouched: [...builder.nodeIds.values(), ...builder.moduleIds.values()],
+      nodeIdsTouched: [
+        ...builder.nodeIds.values(),
+        ...builder.moduleIds.values(),
+      ],
       edgeList: builder.edgeList.slice(),
       visitedEventNames: [...builder.visitedEvents],
       baseTitle: humanizeEventName(eventNode.eventName),
     });
   }
+  return automatedCandidates;
+}
 
+function generateFlowPages(candidates, gatewayRoutes) {
   const titleCounts = new Map();
-  for (const c of candidates) titleCounts.set(c.baseTitle, (titleCounts.get(c.baseTitle) || 0) + 1);
+  for (const c of candidates)
+    titleCounts.set(c.baseTitle, (titleCounts.get(c.baseTitle) || 0) + 1);
 
   const generated = [];
   for (const c of candidates) {
-    // Automated triggers have no controller to derive a disambiguation
-    // suffix from - the event name itself is already the unique thing
-    // distinguishing it from an unrelated flow that happens to share a
-    // humanized title.
     const disambiguator = c.isAutomatedTrigger
       ? c.seedEventName
       : humanizeIdentifier(c.controllerClass.replace(/Controller$/, ""));
-    const title = titleCounts.get(c.baseTitle) > 1 ? `${c.baseTitle} (${disambiguator})` : c.baseTitle;
+    const title =
+      titleCounts.get(c.baseTitle) > 1
+        ? `${c.baseTitle} (${disambiguator})`
+        : c.baseTitle;
     const slug = sanitizeFilename(title);
-    const module = c.isAutomatedTrigger ? c.originModule : c.endpoints[0].module;
-    // Used only for the index page's "(...)" origin hint - an event name
-    // reads fine there in the same slot a controller class normally would.
-    const originLabel = c.isAutomatedTrigger ? c.seedEventName : c.controllerClass;
+    const module = c.isAutomatedTrigger
+      ? c.originModule
+      : c.endpoints[0].module;
+    const originLabel = c.isAutomatedTrigger
+      ? c.seedEventName
+      : c.controllerClass;
+    const actionMethodSuffix = c.actionMethod ? `.${c.actionMethod}` : "";
 
     const originSection = c.isAutomatedTrigger
       ? `- **Trigger**: automatically published event \`${c.seedEventName}\` (no HTTP endpoint - fired by a background process or another handler)`
-      : `- **Controller**: ${c.controllerClass}${c.actionMethod ? `.${c.actionMethod}` : ""}\n- **Endpoints**:\n${c.endpoints
+      : `- **Controller**: ${c.controllerClass}${actionMethodSuffix}\n- **Endpoints**:\n${c.endpoints
           .map((e) => {
             const internalPath = `${e.routeTemplate || ""}${e.routeSegment ? "/" + e.routeSegment : ""}`;
-            const publicUrl = resolvePublicUrl(gatewayRoutes, internalPath, e.httpMethod);
+            const publicUrl = resolvePublicUrl(
+              gatewayRoutes,
+              internalPath,
+              e.httpMethod,
+            );
             return publicUrl
               ? `  - \`${e.httpMethod} ${publicUrl}\` (via ApiGateway; internally \`${internalPath}\`)`
               : `  - \`${e.httpMethod} ${internalPath}\` (no ApiGateway route resolved)`;
@@ -223,8 +266,19 @@ ${c.mermaid}
       candidate: c,
     });
   }
+  return generated;
+}
 
-  generated.sort((a, b) => a.module.localeCompare(b.module) || a.title.localeCompare(b.title));
+function buildIndexContent(
+  generated,
+  actionGroups,
+  endpointsByController,
+  overviewSection,
+) {
+  generated.sort(
+    (a, b) =>
+      a.module.localeCompare(b.module) || a.title.localeCompare(b.title),
+  );
 
   const byModule = new Map();
   for (const g of generated) {
@@ -235,38 +289,16 @@ ${c.mermaid}
   const indexSections = [...byModule.entries()]
     .map(([module, items]) => {
       const links = items
-        .map((i) => `- [${i.title}](#/flows/${i.relPath.replace(/\.md$/, "")}) (${i.controllerClass}) — touches ${i.modulesTouched.join(", ")}`)
+        .map(
+          (i) =>
+            `- [${i.title}](#/flows/${i.relPath.replace(/\.md$/, "")}) (${i.controllerClass}) — touches ${i.modulesTouched.join(", ")}`,
+        )
         .join("\n");
       return `## ${module}\n\n${links}`;
     })
     .join("\n\n");
 
-  const { section: overviewSection, continuationsByPath } = buildOverviewGraphSection(
-    candidates,
-    generated,
-    eventsByName,
-    requestsByType,
-    endpointsByController,
-    classHierarchy,
-  );
-
-  // The per-flow pages above were already written before continuesInto
-  // could be computed (it needs flowsByNode, which needs every flow's own
-  // page to already exist) - patch each one now with a "Continues into"
-  // section pointing at whatever separately-generated flow picks up where
-  // this one's own trace runs out.
-  for (const g of generated) {
-    const continuesInto = continuationsByPath.get(`flows/${g.relPath.replace(/\.md$/, "")}`);
-    if (!continuesInto || continuesInto.length === 0) continue;
-    const filePath = path.join(OUT_DIR, g.relPath);
-    const links = continuesInto.map((f) => `- [${f.title}](#/${f.path})`).join("\n");
-    fs.appendFileSync(
-      filePath,
-      `\n## Continues Into\n\nThis flow's own trace ends before these, but they pick up from a node it touches:\n\n${links}\n`,
-    );
-  }
-
-  const indexContent = `---
+  return `---
 type: flows
 ---
 
@@ -297,6 +329,79 @@ ${overviewSection}
 
 ${indexSections}
 `;
+}
+
+function patchContinuesIntoSections(generated, continuationsByPath) {
+  for (const g of generated) {
+    const continuesInto = continuationsByPath.get(
+      `flows/${g.relPath.replace(/\.md$/, "")}`,
+    );
+    if (!continuesInto || continuesInto.length === 0) continue;
+    const filePath = path.join(OUT_DIR, g.relPath);
+    const links = continuesInto
+      .map((f) => `- [${f.title}](#/${f.path})`)
+      .join("\n");
+    fs.appendFileSync(
+      filePath,
+      `\n## Continues Into\n\nThis flow's own trace ends before these, but they pick up from a node it touches:\n\n${links}\n`,
+    );
+  }
+}
+
+function main() {
+  console.error("Building event graph...");
+  const eventGraph = buildEventGraph();
+  console.error("Building command graph...");
+  const commandGraph = buildCommandGraph();
+  console.error("Building gateway routes...");
+  const gatewayRoutes = buildGatewayRoutes();
+  console.error("Building class hierarchy...");
+  const classHierarchy = buildClassHierarchy();
+
+  const { eventsByName, requestsByType, endpointsByController } =
+    buildGraphMaps(eventGraph, commandGraph);
+  const actionGroups = groupEndpointsByAction(commandGraph);
+
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  cleanGeneratedDir(OUT_DIR);
+
+  const candidates = buildHttpTriggeredCandidates(
+    actionGroups,
+    eventsByName,
+    requestsByType,
+    endpointsByController,
+    classHierarchy,
+  );
+  const automatedCandidates = buildAutomatedTriggerCandidates(
+    eventGraph,
+    candidates,
+    eventsByName,
+    requestsByType,
+    endpointsByController,
+    classHierarchy,
+  );
+  candidates.push(...automatedCandidates);
+
+  const generated = generateFlowPages(candidates, gatewayRoutes);
+
+  const { section: overviewSection, continuationsByPath } =
+    buildOverviewGraphSection(
+      candidates,
+      generated,
+      eventsByName,
+      requestsByType,
+      endpointsByController,
+      classHierarchy,
+    );
+
+  patchContinuesIntoSections(generated, continuationsByPath);
+
+  const indexContent = buildIndexContent(
+    generated,
+    actionGroups,
+    endpointsByController,
+    overviewSection,
+  );
   fs.writeFileSync(path.join(OUT_DIR, "index.md"), indexContent);
 
   const automatedCount = candidates.filter((c) => c.isAutomatedTrigger).length;
@@ -305,39 +410,27 @@ ${indexSections}
   );
 }
 
-// One compound graph with every module that participates in any generated
-// flow as a collapsible parent node, and the real commands/queries/events/
-// endpoints touched inside it as children - re-running visitController on a
-// single SHARED builder (instead of the fresh-per-action one used for each
-// flow's own page above) unions every interesting flow's nodes and edges
-// into one deduplicated graph, since DiagramBuilder's visited-sets carry
-// across calls. Rendered client-side as plain DOM/SVG (see
-// viewer/src/components/overview-graph.ts): modules start collapsed
-// (mermaid-style module overview), and expand on click to reveal their real
-// internal nodes/edges - mermaid can only draw a fixed picture, it has no
-// notion of a node being an expandable group.
-function buildOverviewGraphSection(candidates, generated, eventsByName, requestsByType, endpointsByController, classHierarchy) {
-  if (candidates.length === 0) return "";
-
-  const shared = new DiagramBuilder(eventsByName, requestsByType, endpointsByController, classHierarchy);
+function buildSharedDiagram(
+  candidates,
+  eventsByName,
+  requestsByType,
+  endpointsByController,
+  classHierarchy,
+) {
+  const shared = new DiagramBuilder(
+    eventsByName,
+    requestsByType,
+    endpointsByController,
+    classHierarchy,
+  );
   for (const c of candidates) {
     if (c.isAutomatedTrigger) shared.visitEvent(c.seedEventName, 5);
     else shared.visitController(c.controllerClass, 5, c.actionMethod);
   }
+  return shared;
+}
 
-  // shared.edgeList is incomplete for any node reached by more than one
-  // candidate: DiagramBuilder's visited-tracking (built so a widely-shared
-  // node's box/metadata is only created once, not once per candidate) means
-  // only the FIRST candidate to reach a node through this sequential
-  // re-traversal gets its own caller/producer edge recorded here - every
-  // OTHER candidate that also legitimately dispatches/produces that same
-  // node from a different class silently loses its edge in the shared
-  // graph, even though it's present and correct in that candidate's own
-  // independent edgeList (each traced with its own fresh, unshared
-  // builder). Replace the edge list with a union of every candidate's own
-  // edges instead - shared.nodeMeta/moduleIds/nodeOwnerModule from the
-  // traversal above are still needed for node identity/metadata and are
-  // kept as-is; only completeness of the EDGES needed fixing.
+function unionEdgeLists(candidates) {
   const seenSharedEdgeKeys = new Set();
   const unionedEdges = [];
   for (const c of candidates) {
@@ -348,70 +441,43 @@ function buildOverviewGraphSection(candidates, generated, eventsByName, requests
       unionedEdges.push(e);
     }
   }
-  shared.edgeList = unionedEdges;
+  return unionedEdges;
+}
 
-  const sanitizeId = (text) => text.replace(/[^A-Za-z0-9_]/g, "_");
-  const moduleIdSet = new Set(shared.moduleIds.values());
+function rewriteEdgesHelper(edgeList, moduleIdSet, sanitizeId) {
+  const synthNodes = new Map(); // synthId -> { label, moduleId }
+  const rewrittenEdges = [];
+  for (const e of edgeList) {
+    const targetIsModule = moduleIdSet.has(e.to);
+    const sourceIsModule = moduleIdSet.has(e.from);
 
-  // Most cross-module event/command traffic never gets a dedicated node:
-  // DiagramBuilder draws e.g. "event -> consumer's module" directly, with
-  // the actual handler class living only in the edge's label (see
-  // visitEvent/visitRequest in generate-flow-diagram.mjs - correct for the
-  // per-flow pages, which show the class name right there on the arrow).
-  // The overview has no arrow to put a label on once collapsed to a
-  // module box, so without this there'd be nothing concrete to expand
-  // into for the vast majority of cross-module relations - only the
-  // minority that happen to chain into a further dispatch got their own
-  // node. Synthesize a real node per (module, class-name) pair from that
-  // label instead, and reroute the edge through it.
-  // A command/query has exactly one handler (DiagramBuilder.visitRequest
-  // only ever draws one `reqId -> module` edge, right after `if
-  // (node.handler)`) - a separate box for "the one thing that processes
-  // this" is pure duplication of the command/query node right next to it,
-  // unlike an event (which can have several independent consumers, where
-  // the fan-out is the whole point). So that specific edge shape folds
-  // into the request node itself as a tooltip instead of a synthetic node.
-  // Shared so a per-candidate call (below, for flow edge ordering) produces
-  // the exact same synthetic node ids as this shared-graph call - both are
-  // deterministic functions of (moduleId, label), so the two are directly
-  // comparable without needing to reconcile two different id schemes.
-  // A handler is an actor that does something, regardless of what kind of
-  // thing triggered it (event, command, or query) - it always gets its own
-  // node. Commands/queries are just data being dispatched, not actors, so
-  // they never get to "absorb" their handler into a tooltip; the synthetic
-  // node id is a deterministic function of (moduleId, label), so whichever
-  // side of the handler's work an edge comes from (being triggered, or
-  // going on to trigger something else) converges on the exact same node.
-  function rewriteEdges(edgeList) {
-    const synthNodes = new Map(); // synthId -> { label, moduleId }
-    const rewrittenEdges = [];
-    for (const e of edgeList) {
-      const targetIsModule = moduleIdSet.has(e.to);
-      const sourceIsModule = moduleIdSet.has(e.from);
-
-      if (targetIsModule && e.label) {
-        const synthId = `SYN_${sanitizeId(e.to)}_${sanitizeId(e.label)}`;
-        if (!synthNodes.has(synthId)) synthNodes.set(synthId, { label: e.label, moduleId: e.to });
-        rewrittenEdges.push({ from: e.from, to: synthId, label: "" });
-      } else if (sourceIsModule && e.label) {
-        const synthId = `SYN_${sanitizeId(e.from)}_${sanitizeId(e.label)}`;
-        if (!synthNodes.has(synthId)) synthNodes.set(synthId, { label: e.label, moduleId: e.from });
-        rewrittenEdges.push({ from: synthId, to: e.to, label: "" });
-      } else {
-        rewrittenEdges.push(e);
-      }
+    if (targetIsModule && e.label) {
+      const synthId = `SYN_${sanitizeId(e.to)}_${sanitizeId(e.label)}`;
+      if (!synthNodes.has(synthId))
+        synthNodes.set(synthId, { label: e.label, moduleId: e.to });
+      rewrittenEdges.push({ from: e.from, to: synthId, label: "" });
+    } else if (sourceIsModule && e.label) {
+      const synthId = `SYN_${sanitizeId(e.from)}_${sanitizeId(e.label)}`;
+      if (!synthNodes.has(synthId))
+        synthNodes.set(synthId, { label: e.label, moduleId: e.from });
+      rewrittenEdges.push({ from: synthId, to: e.to, label: "" });
+    } else {
+      rewrittenEdges.push(e);
     }
-    return { synthNodes, rewrittenEdges };
   }
+  return { synthNodes, rewrittenEdges };
+}
 
-  const { synthNodes, rewrittenEdges } = rewriteEdges(shared.edgeList);
-
+function buildGraphElements(shared, synthNodes, rewrittenEdges) {
   const elements = [];
   for (const [module, modId] of shared.moduleIds) {
     elements.push({ data: { id: modId, label: module, isModule: true } });
   }
   for (const nodeId of shared.nodeIds.values()) {
-    const meta = shared.nodeMeta.get(nodeId) || { kind: "unknown", label: nodeId };
+    const meta = shared.nodeMeta.get(nodeId) || {
+      kind: "unknown",
+      label: nodeId,
+    };
     const parent = shared.nodeOwnerModule.get(nodeId);
     elements.push({
       data: {
@@ -423,45 +489,39 @@ function buildOverviewGraphSection(candidates, generated, eventsByName, requests
     });
   }
   for (const [synthId, { label, moduleId }] of synthNodes) {
-    elements.push({ data: { id: synthId, label, kind: "handler", parent: moduleId } });
+    elements.push({
+      data: { id: synthId, label, kind: "handler", parent: moduleId },
+    });
   }
   let edgeIdx = 0;
   for (const e of rewrittenEdges) {
-    elements.push({ data: { id: `E${edgeIdx++}`, source: e.from, target: e.to, label: e.label } });
+    elements.push({
+      data: {
+        id: `E${edgeIdx++}`,
+        source: e.from,
+        target: e.to,
+        label: e.label,
+      },
+    });
   }
+  return elements;
+}
 
-  // nodeId (module OR fine-grained command/event/endpoint) -> flows that
-  // touch it, so clicking any node - collapsed module or expanded detail -
-  // can list+link the flows it participates in.
-  const flowsByNode = new Map();
-  for (const g of generated) {
-    const c = g.candidate;
-    const path = `flows/${g.relPath.replace(/\.md$/, "")}`;
-    for (const nodeId of c.nodeIdsTouched) {
-      if (!flowsByNode.has(nodeId)) flowsByNode.set(nodeId, []);
-      flowsByNode.get(nodeId).push({ title: g.title, path });
-    }
-  }
-  // A synthetic handler node has no direct flow of its own - it's a
-  // stand-in for a class the extractor only ever saw as an edge label -
-  // so it borrows its owning module's flow list as the closest real answer.
+function buildFlowsByNode(generated, synthNodes, flowsByNodeMap) {
   for (const [synthId, { moduleId }] of synthNodes) {
-    if (flowsByNode.has(moduleId)) flowsByNode.set(synthId, flowsByNode.get(moduleId));
+    if (flowsByNodeMap.has(moduleId))
+      flowsByNodeMap.set(synthId, flowsByNodeMap.get(moduleId));
   }
+}
 
-  // One entry per generated flow page, with the module ids it touches -
-  // drives the "jump to a flow" selector, which expands exactly those
-  // modules instead of making the user click through them one at a time.
+function buildFlowList(generated, shared, rewriteEdgesFunc, sanitizeId) {
   const flowList = [];
   for (const g of generated) {
     const c = g.candidate;
-    const moduleIds = c.moduleList.map((m) => shared.moduleIds.get(m)).filter(Boolean);
-    // This flow's own edges, rewritten with the same synthetic-node scheme
-    // as the shared graph (so ids line up) and deduped in first-discovery
-    // order - the client numbers arrows 1, 2, 3... by position in this
-    // list, since that reflects the actual order DiagramBuilder traced the
-    // dispatch chain for this specific action.
-    const { rewrittenEdges: flowEdges } = rewriteEdges(c.edgeList);
+    const moduleIds = c.moduleList
+      .map((m) => shared.moduleIds.get(m))
+      .filter(Boolean);
+    const { rewrittenEdges: flowEdges } = rewriteEdgesFunc(c.edgeList);
     const seenEdgeKeys = new Set();
     const orderedEdges = [];
     for (const e of flowEdges) {
@@ -471,10 +531,6 @@ function buildOverviewGraphSection(candidates, generated, eventsByName, requests
       orderedEdges.push({ from: e.from, to: e.to });
     }
 
-    // nodeIds is the flow's own full touched-node set (from its own,
-    // pre-rewrite builder pass) - used client-side to restrict the
-    // overview's edges to only the ones actually part of this flow,
-    // instead of every edge that happens to connect its expanded modules.
     flowList.push({
       title: g.title,
       path: `flows/${g.relPath.replace(/\.md$/, "")}`,
@@ -487,26 +543,17 @@ function buildOverviewGraphSection(candidates, generated, eventsByName, requests
         : `EP_${sanitizeId(c.controllerClass + (c.actionMethod || ""))}`,
     });
   }
-  // A flow's own trace can dead-end at a node (hop budget, or a handoff to
-  // a module with no single onward node to point at) that's ALSO where a
-  // SEPARATELY-generated flow picks up - e.g. Register Tenant ends at
-  // TenantLicensesActivatedHandler, and Module Provisioning Completed /
-  // Service Registered / etc. are all their own independent flow pages
-  // that also touch that same node. Reusing flowsByNode (already built
-  // above) at exactly the nodes where THIS flow's own trace has no further
-  // outgoing edge turns those disconnected islands into a discoverable
-  // trail, without inlining everything into one unreadable diagram.
+  return flowList;
+}
+
+function processContinuations(flowList, flowsByNode, moduleIdSet) {
   for (const flow of flowList) {
     const edgeNodeIds = flow.edges.flatMap((e) => [e.from, e.to]);
     const allIds = new Set([...flow.nodeIds, ...edgeNodeIds]);
     const hasOutgoing = new Set(flow.edges.map((e) => e.from));
-    // Bare module ids are excluded here - c.nodeIdsTouched always includes
-    // every module a flow touches, so a module would trivially qualify as
-    // "leaf" (it's never anyone's edge source) regardless of where the
-    // trace actually stopped, double-counting against the specific
-    // synthetic handler node that already borrows the exact same broad
-    // per-module flow list.
-    const leafIds = [...allIds].filter((id) => !hasOutgoing.has(id) && !moduleIdSet.has(id));
+    const leafIds = [...allIds].filter(
+      (id) => !hasOutgoing.has(id) && !moduleIdSet.has(id),
+    );
     const seenPaths = new Set([flow.path]);
     const continuesInto = [];
     for (const leafId of leafIds) {
@@ -518,8 +565,59 @@ function buildOverviewGraphSection(candidates, generated, eventsByName, requests
     }
     flow.continuesInto = continuesInto;
   }
+}
 
-  flowList.sort((a, b) => a.module.localeCompare(b.module) || a.title.localeCompare(b.title));
+function buildOverviewGraphSection(
+  candidates,
+  generated,
+  eventsByName,
+  requestsByType,
+  endpointsByController,
+  classHierarchy,
+) {
+  if (candidates.length === 0)
+    return { section: "", continuationsByPath: new Map() };
+
+  const shared = buildSharedDiagram(
+    candidates,
+    eventsByName,
+    requestsByType,
+    endpointsByController,
+    classHierarchy,
+  );
+  const unionedEdges = unionEdgeLists(candidates);
+  shared.edgeList = unionedEdges;
+
+  const sanitizeId = (text) => text.replace(/\W/g, "_");
+  const moduleIdSet = new Set(shared.moduleIds.values());
+  const rewriteEdgesFunc = (edgeList) =>
+    rewriteEdgesHelper(edgeList, moduleIdSet, sanitizeId);
+  const { synthNodes, rewrittenEdges } = rewriteEdgesFunc(shared.edgeList);
+
+  const elements = buildGraphElements(shared, synthNodes, rewrittenEdges);
+
+  const flowsByNode = new Map();
+  for (const g of generated) {
+    const c = g.candidate;
+    const path = `flows/${g.relPath.replace(/\.md$/, "")}`;
+    for (const nodeId of c.nodeIdsTouched) {
+      if (!flowsByNode.has(nodeId)) flowsByNode.set(nodeId, []);
+      flowsByNode.get(nodeId).push({ title: g.title, path });
+    }
+  }
+  buildFlowsByNode(generated, synthNodes, flowsByNode);
+
+  const flowList = buildFlowList(
+    generated,
+    shared,
+    rewriteEdgesFunc,
+    sanitizeId,
+  );
+  processContinuations(flowList, flowsByNode, moduleIdSet);
+  flowList.sort(
+    (a, b) =>
+      a.module.localeCompare(b.module) || a.title.localeCompare(b.title),
+  );
 
   const payload = {
     elements,
@@ -539,7 +637,9 @@ ${JSON.stringify(payload)}
 \`\`\`
 `;
 
-  const continuationsByPath = new Map(flowList.map((f) => [f.path, f.continuesInto]));
+  const continuationsByPath = new Map(
+    flowList.map((f) => [f.path, f.continuesInto]),
+  );
   return { section, continuationsByPath };
 }
 
