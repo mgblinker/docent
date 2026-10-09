@@ -29,7 +29,7 @@ production data.
 | # | Asset | Control | Threat treated | Status |
 |---|---|---|---|---|
 | C1 | PostgreSQL data (all service DBs) on prod-server | Full-volume encryption (LUKS2, AES-XTS-256) on the volume holding the Docker data directory | Theft or loss of disk, provider snapshot, decommissioned hardware | Planned |
-| C2 | Database backups and WAL archives | Encrypted before leaving the host (`age` or GPG, asymmetric; private key held offline) | Backup theft, offsite storage compromise | Planned |
+| C2 | Database backups and WAL archives | Encrypted before leaving the host (`age`, asymmetric; private key held offline) | Backup theft, offsite storage compromise | Runbook ready (`docs/cicd/postgres-backups.md`), awaiting one-time setup + deploy |
 | C3 | Object storage (FileService, Avatars: SeaweedFS / Infomaniak S3) | Server-side encryption at rest on the storage backend | Storage-level compromise | Planned |
 | C4 | Postgres connections (service to DB) | TLS, `SSL Mode=VerifyFull` (Npgsql) with a private CA | Network interception between containers or hosts | Planned |
 | C5 | Client to platform traffic | TLS at the Caddy entrypoint, HSTS | Interception on the public network | In place (verify config) |
@@ -75,7 +75,7 @@ production data.
 - C6 / C7: KeyVault access list and last rotation date
 - Annual review record of this policy and the custodian list
 
-## 8. Known gaps (as of drafting)
+## 8. Known gaps (as of 2026-09-27)
 
 - No .NET connection string in the repositories sets `SSL Mode`. Production
   strings are injected at deploy time, so verify what prod actually uses.

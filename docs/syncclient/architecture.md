@@ -155,6 +155,51 @@ CI (`.github/workflows`) builds and packages via `vpk pack`:
   same user can read these items without a prompt — both need a signed
   app with Keychain entitlements to fix properly.
 
+## Troubleshooting
+
+Log: `%LocalAppData%\Processity\SyncClient\sync-client.log` (macOS/Linux:
+the equivalent `LocalApplicationData` path), rolled once at 5 MB.
+Settings live next to it in `settings.json` and `accounts.json`.
+
+### "Sync Now" does nothing, status stays idle, nothing in the log
+
+Symptom: the folder list is populated, the status line shows the idle
+default (German UI: "Inaktiv"), there is no "last synced" indicator, no
+`[Sync:…]` log lines, and the folders' index DBs (`index-<guid>.db`) stop
+changing. Only one client process is running.
+
+Cause: a sync folder's `AccountId` in `settings.json` no longer matches
+any account in `accounts.json` (e.g. the account was replaced by a
+re-login, or the folder was never stamped with an account id). The UI
+lists every folder regardless, but `MainWindow` only creates a
+`SyncCoordinator` — and therefore workers, including their 60 s periodic
+timers — for folders whose `AccountId` equals a signed-in account. With no
+match, "Sync Now" silently skips every folder and nothing is logged.
+
+Fix: remove and re-add the sync folder in Settings (re-configuring the
+folder stamps it with the current account). Alternatively, with the app
+stopped, set each affected folder's `AccountId` in `settings.json` to the
+account's `Id` from `accounts.json`.
+
+Known gap: nothing logs this state. Adding a log line when a folder is
+skipped for an unmatched account (or re-stamping orphaned folders onto the
+sole account at startup) would make it self-diagnosing.
+
+### "Another instance already holds the lock — exiting"
+
+`SingleInstanceGuard` holds an exclusive lock on
+`…\SyncClient\instance.lock`. A second launch retries for ~10 s (so
+"Restart Now" and updater relaunches can overlap the old process) and then
+exits. If it persists, an older process is still alive — end every
+`Processity.SyncClient` process in Task Manager and start the app again.
+Note this message only means the lock is held; it says nothing about
+whether the running instance is syncing.
+
+### Re-login rejected with 400 "PublicKey / RedirectUri is required"
+
+A client older than the device-link hardening (redirect_uri binding,
+register ticket) is talking to a hardened server. Update the client.
+
 ## Related components
 
 - [FileService Architecture](../fileservice/architecture.md) — the API this client syncs against
