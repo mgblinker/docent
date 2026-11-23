@@ -219,7 +219,11 @@ function parseFrontMatter(markdown: string): {
 const TYPE_LABELS: Record<string, string> = {
   flows: "Flows",
   architecture: "Architecture",
-  manual: "Manuals and HowTos",
+  manual: "Manual",
+  guide: "Guide",
+  reference: "Reference",
+  operations: "Operations",
+  product: "Product",
 };
 
 // "feature" and "howto" are legacy frontmatter values from before those
