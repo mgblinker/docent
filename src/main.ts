@@ -126,12 +126,71 @@ function renderCrossCuttingTile(node: NavNode, docType: string): string {
   `;
 }
 
+function findDocType(node: NavNode): string | null {
+  if (node.docType) return node.docType;
+  for (const child of node.children || []) {
+    const found = findDocType(child);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Welcome page for a tree whose roots are plain folders (e.g. one folder per
+// document type): one section per root, one tile per child folder or doc.
+function renderSectionTile(node: NavNode): string {
+  const total = countDocTypes(node, {});
+  const firstFile = findFirstFileAny(node);
+  const icon = node.children ? FOLDER_ICON : DOC_TYPE_ICONS[node.docType || "other"] || DOC_TYPE_ICONS.other;
+  return `
+    <a class="component-tile" href="#" data-file="${firstFile || ""}">
+      <span class="component-tile-title">${icon} ${node.title}</span>
+      <span class="component-tile-count">${total} doc${total === 1 ? "" : "s"}</span>
+    </a>
+  `;
+}
+
+function showSectionWelcome(contentEl: HTMLElement, tocEl: HTMLElement): void {
+  const sections = navTree
+    .filter((node) => node.children && node.children.length > 0)
+    .map((node) => {
+      const type = findDocType(node);
+      const icon = (type && DOC_TYPE_ICONS[type]) || FOLDER_ICON;
+      return `
+      <section class="category-section">
+        <h2 class="category-heading">${icon} ${node.title}</h2>
+        <div class="component-grid">${(node.children || []).map(renderSectionTile).join("")}</div>
+      </section>`;
+    })
+    .join("");
+
+  contentEl.innerHTML = `
+    <div class="welcome">
+      <h1>${document.querySelector(".site-title")?.textContent || "Docs"}</h1>
+      <p class="welcome-subtitle">Pick a kind of document below, or use search</p>
+      ${sections}
+    </div>
+  `;
+  tocEl.innerHTML = "";
+
+  contentEl.querySelectorAll<HTMLElement>(".component-tile").forEach((tile) => {
+    tile.addEventListener("click", (e) => {
+      e.preventDefault();
+      const file = tile.dataset.file;
+      if (file) navigateTo(file);
+    });
+  });
+}
+
 function showWelcome(): void {
   const contentEl = document.getElementById("content-inner");
   const tocEl = document.getElementById("toc");
   if (!contentEl || !tocEl) return;
 
   const categories = navTree.filter((node) => node.category);
+  if (categories.length === 0) {
+    showSectionWelcome(contentEl, tocEl);
+    return;
+  }
   const flowsCat = categories.find((cat) => cat.category === "Flows");
   const moduleCats = categories.filter((cat) => cat.category !== "Flows");
   const allModules = moduleCats.flatMap((cat) => cat.children || []);
@@ -300,6 +359,13 @@ function navigateTo(docPath: string, anchor: string | null = null): void {
 function renderTabs(docTypes: DocType[]): void {
   const tabBar = document.getElementById("tab-bar");
   if (!tabBar) return;
+
+  // No document types configured: the tree itself is the navigation, so
+  // there is nothing to filter by. Drop the bar and the space it reserves.
+  if (docTypes.length === 0) {
+    document.documentElement.style.setProperty("--tab-height", "0px");
+    return;
+  }
 
   const homeTab: DocType = { id: "modules", label: "Modules and Services" };
   const allTypes = [homeTab, ...docTypes, { id: "other", label: "Other" }];

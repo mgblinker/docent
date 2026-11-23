@@ -305,6 +305,8 @@ body {
 .sidebar-content .nav-link.type-feature .icon { color: #2f855a; }
 .sidebar-content .nav-link.type-howto .icon { color: #c05621; }
 .sidebar-content .nav-link.type-manual .icon { color: #6b46c1; }
+.sidebar-content .nav-link.type-guide .icon { color: #2f855a; }
+.sidebar-content .nav-link.type-operations .icon { color: #c05621; }
 .sidebar-content .nav-link.type-other .icon { color: var(--gray-500); }
 
 .sidebar-content .nav-link:hover {
@@ -418,6 +420,22 @@ body {
 .chip-manual {
   background: #f4f0ff;
   color: #6b46c1;
+}
+
+.chip-guide {
+  background: #ecfbf4;
+  color: #276749;
+}
+
+.chip-operations {
+  background: #fff4e8;
+  color: #9c461b;
+}
+
+.chip-reference,
+.chip-product {
+  background: var(--gray-100, #f1f3f5);
+  color: var(--gray-600, #495057);
 }
 
 .content-inner {

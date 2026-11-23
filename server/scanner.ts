@@ -94,6 +94,16 @@ function titleFromSlug(slug: string): string {
   );
 }
 
+// "Gardening — Suche" inside the Gardening folder reads "Suche": drop the
+// "<Folder> — " prefix when the folder's name is part of it.
+function stripFolderPrefix(title: string, folderSlug: string): string {
+  const m = /^(.+?)\s+[—–]\s+(\S.*)$/.exec(title);
+  if (!m) return title;
+  const norm = (t: string) => t.toLowerCase().replace(/processity|[^a-z]/g, "");
+  const folder = norm(folderSlug);
+  return folder && norm(m[1]).includes(folder) ? m[2] : title;
+}
+
 function joinRelative(base: string, segment: string): string {
   return base ? `${base}/${segment}` : segment;
 }
@@ -245,6 +255,7 @@ async function processFileEntry(
   if (!title || isGenericTitle(title)) {
     title = toTitleCase(path.basename(dirPath));
   }
+  title = stripFolderPrefix(title, path.basename(dirPath));
   if (!title) return null;
   const docType = meta.docType || inferDocType(relFile, opts);
   return {
